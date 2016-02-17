@@ -7,7 +7,7 @@
 enum tile_info {
 	TILE_OPENED = 1,
 	TILE_MINE = 1 << 1,
-	TILE_FLAG = 1 << 2,
+	TILE_FLAG = 1 << 2
 };
 
 enum direction {
