@@ -10,6 +10,13 @@ enum tile_info {
 	TILE_FLAG = 1 << 2,
 };
 
+enum direction {
+	LEFT,
+	RIGHT,
+	UP,
+	DOWN
+};
+
 struct board {
 	int width;
 	int height;
@@ -22,5 +29,6 @@ void board_init(struct board *board, int width, int height, float mine_density);
 void board_deinit(struct board *board);
 void render(WINDOW *window, struct board *board);
 void open_tile(struct board *board);
+void move_cursor(struct board *board, enum direction direction);
 
 #endif

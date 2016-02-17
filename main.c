@@ -25,8 +25,11 @@ int main(int argc, char **argv) {
 	// Make sure this game is actually interesting
 	srand(time(NULL));
 	
-	// Create window where we will draw the board
-	WINDOW *board_win = newwin(b.height, b.width, screen_height / 2 - b.height / 2, screen_width / 2 - b.width / 2);
+	// Create window where we will draw the board. Add 2
+	// to the window size so we can draw a box around it
+	int window_width = b.width + 2;
+	int window_height = b.height + 2;
+	WINDOW *board_win = newwin(window_height, window_width, screen_height / 2 - window_height / 2, screen_width / 2 - window_width / 2);
 	box(board_win, 0, 0);
 	render(board_win, &b);
 	refresh();
@@ -38,22 +41,22 @@ int main(int argc, char **argv) {
 		switch(ch) {	
 			case KEY_LEFT:
 			case 'h':
-				b.cursor_x -= 1;
+				move_cursor(&b, LEFT);
 				break;
 
 			case KEY_RIGHT:
 			case 'l':
-				b.cursor_x += 1;
+				move_cursor(&b, RIGHT);
 				break;
 
 			case KEY_UP:
 			case 'k':
-				b.cursor_y -= 1;
+				move_cursor(&b, UP);
 				break;
 
 			case KEY_DOWN:
 		    case 'j':
-				b.cursor_y += 1;
+				move_cursor(&b, DOWN);
 				break;
 
 		    case ',':
