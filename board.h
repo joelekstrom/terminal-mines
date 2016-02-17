@@ -4,11 +4,10 @@
 #ifndef BOARD_H
 #define BOARD_H
 
-enum {
-	FLAG = 100, 
-	MINE, 
-	UNOPENED,
-	NOTHING
+enum tile_info {
+	TILE_OPENED = 1,
+	TILE_MINE = 1 << 1,
+	TILE_FLAG = 1 << 2,
 };
 
 struct board {
@@ -16,10 +15,12 @@ struct board {
 	int height;
 	int cursor_x;
 	int cursor_y;
-	int **data;
+	uint8_t *data;
 };
 
-void board_init(struct board *board, int width, int height);
+void board_init(struct board *board, int width, int height, float mine_density);
+void board_deinit(struct board *board);
 void render(WINDOW *window, struct board *board);
+void open_tile(struct board *board);
 
 #endif
