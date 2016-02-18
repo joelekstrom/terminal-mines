@@ -61,11 +61,11 @@ int main(int argc, char **argv) {
 
 		case 'g':
 		case 'f':
-			toggle_flag(&b);
+			toggle_flag_at_cursor(&b);
 			break;
 
 		case ',':
-			open_tile(&b);
+			open_tile_at_cursor(&b);
 			break;
 		}
 

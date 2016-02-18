@@ -33,7 +33,7 @@ void board_init(struct board *board, int width, int height, float mine_density);
 void board_deinit(struct board *board);
 void render(WINDOW *window, struct board *board);
 void move_cursor(struct board *board, enum direction direction);
-void open_tile(struct board *board);
-void toggle_flag(struct board *board);
+void open_tile_at_cursor(struct board *board);
+void toggle_flag_at_cursor(struct board *board);
 
 #endif

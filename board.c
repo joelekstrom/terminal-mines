@@ -1,7 +1,11 @@
 #include "board.h"
 #include <stdlib.h>
 
+#define MAX(A, B) A > B ? A : B
+#define MIN(A, B) A < B ? A : B
+
 uint8_t* get_tile(struct board *board, int x, int y);
+void open_tile(uint8_t* tile);
 
 void board_init(struct board *board, int width, int height, float mine_density) {
 	board->width = width;
@@ -61,7 +65,21 @@ void board_deinit(struct board *board) {
 	free(board->data);
 }
 
-void open_tile(struct board *board) {
+void open_adjacent_empty_tiles(struct board *board, int x, int y) {
+	for (int i = x - 1; i <= x + 1; i++) {
+		for (int j = y - 1; j <= y + 1; j++) {
+			uint8_t* adjacent_tile = get_tile(board, i, j);
+			if (adjacent_tile && !(*adjacent_tile & TILE_OPENED) && !(*adjacent_tile & TILE_FLAG)) {
+				open_tile(adjacent_tile);
+				if (adjacent_mine_count(adjacent_tile) == 0) {
+					open_adjacent_empty_tiles(board, i, j);
+				}
+			}
+		}
+	}
+}
+
+void open_tile_at_cursor(struct board *board) {
 	if (!board->mines_placed) {
 		generate_mines(board);
 	}
@@ -73,15 +91,22 @@ void open_tile(struct board *board) {
 		return;
 	}
 
-	*tile |= TILE_OPENED;
+	open_tile(tile);
+
 	if (*tile & TILE_MINE) {
 		board->game_over = true;
+	} else if (adjacent_mine_count(tile) == 0) {
+		open_adjacent_empty_tiles(board, board->cursor_x, board->cursor_y);
 	}
 }
 
-void toggle_flag(struct board *board) {
+void toggle_flag_at_cursor(struct board *board) {
 	uint8_t* tile = get_tile(board, board->cursor_x, board->cursor_y);
 	*tile ^= TILE_FLAG;
+}
+
+void open_tile(uint8_t *tile) {
+	*tile |= TILE_OPENED;
 }
 
 bool is_out_of_bounds(struct board *b, int x, int y) {
@@ -99,27 +124,19 @@ uint8_t* get_tile(struct board *board, int x, int y) {
 	return &board->data[board->width * y + x];
 }
 
-int max(int a, int b) {
-	return a > b ? a : b;
-}
-
-int min(int a, int b) {
-	return a < b ? a : b;
-}
-
 void move_cursor(struct board *board, enum direction direction) {
 	switch (direction) {
 	case LEFT:
-		board->cursor_x = max(board->cursor_x - 1, 0);
+		board->cursor_x = MAX(board->cursor_x - 1, 0);
 		break;
 	case RIGHT:
-		board->cursor_x = min(board->cursor_x + 1, board->width - 1);
+		board->cursor_x = MIN(board->cursor_x + 1, board->width - 1);
 		break;
 	case UP:
-		board->cursor_y = max(board->cursor_y - 1, 0);
+		board->cursor_y = MAX(board->cursor_y - 1, 0);
 		break;
 	case DOWN:
-		board->cursor_y = min(board->cursor_y + 1, board->height - 1);
+		board->cursor_y = MIN(board->cursor_y + 1, board->height - 1);
 		break;
 	}
 }
