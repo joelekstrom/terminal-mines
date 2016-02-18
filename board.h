@@ -21,9 +21,11 @@ enum direction {
 struct board {
 	int width;
 	int height;
+	float mine_density;
 	int cursor_x;
 	int cursor_y;
 	bool game_over;
+	bool mines_placed;
 	uint8_t *data;
 };
 

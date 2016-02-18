@@ -2,15 +2,16 @@
 #include <stdlib.h>
 
 uint8_t* get_tile(struct board *board, int x, int y);
-void generate_mines(struct board *board, float mine_density);
 
 void board_init(struct board *board, int width, int height, float mine_density) {
 	board->width = width;
 	board->height = height;
 	board->cursor_x = 1;
 	board->cursor_y = 1;
+	board->mine_density = mine_density;
+	board->mines_placed = false;
+	board->game_over = false;
 	board->data = calloc(sizeof(uint8_t), width * height);
-	generate_mines(board, mine_density);
 }
 
 /**
@@ -44,25 +45,29 @@ void place_mine(struct board *board, int x, int y) {
 	}
 }
 
-void generate_mines(struct board *board, float mine_density) {
+void generate_mines(struct board *board) {
 	for (int x = 0; x < board->width; x++) {
 		for (int y = 0; y < board->height; y++) {
 			float r = (float)rand() / (float)RAND_MAX;
-			if (r < mine_density) {
+			if (r < board->mine_density && !(x == board->cursor_x && y == board->cursor_y)) {
 				place_mine(board, x, y);
 			}
 		}
 	}
+	board->mines_placed = true;
 }
 
 void board_deinit(struct board *board) {
 	free(board->data);
 }
 
-
-
 void open_tile(struct board *board) {
+	if (!board->mines_placed) {
+		generate_mines(board);
+	}
+
 	uint8_t* tile = get_tile(board, board->cursor_x, board->cursor_y);
+
 	if (*tile & TILE_FLAG) {
 		flash();
 		return;

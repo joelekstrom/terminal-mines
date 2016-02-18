@@ -13,7 +13,6 @@ int main(int argc, char **argv) {
 
 	int screen_width, screen_height;
 	getmaxyx(stdscr, screen_height, screen_width);
-	char text[] = "HELURRRRRR!!!";
 
 	// Create the game board
 	srand(time(NULL));
