@@ -165,11 +165,15 @@ void render(WINDOW *window, struct board *board) {
    			char sprite = char_at_tile(board, x, y);			
 			int is_cursor = (x == board->cursor_x && y == board->cursor_y) ? 1 : 0;
 			if (is_cursor) {
-				wattron(window, COLOR_PAIR(1));
+				wattron(window, COLOR_PAIR(TERMINE_COLOR_CURSOR));
 			} else if (sprite == '*') {
-				wattron(window, COLOR_PAIR(2));
+				wattron(window, COLOR_PAIR(TERMINE_COLOR_MINE));
+			} else if (sprite == 'F') {
+				wattron(window, COLOR_PAIR(TERMINE_COLOR_FLAG));
+			} else if (sprite >= '1' && sprite <= '8') {
+				wattron(window, COLOR_PAIR(TERMINE_COLOR_1 + (sprite - '1')));
 			} else {
-				wattron(window, COLOR_PAIR(3));
+				wattron(window, COLOR_PAIR(TERMINE_COLOR_DEFAULT));
 			}
 			
 			mvwaddch(window, y + 1, x + 1, sprite);

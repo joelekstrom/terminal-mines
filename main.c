@@ -21,9 +21,15 @@ int main(int argc, char **argv) {
 
 	// Set up colors
 	use_default_colors();
-	init_pair(1, COLOR_YELLOW, COLOR_GREEN); // Cursor
-	init_pair(2, COLOR_YELLOW, COLOR_RED); // Mine
-	init_pair(3, -1, -1); // Default colors
+	init_pair(TERMINE_COLOR_DEFAULT, -1, -1);
+	init_pair(TERMINE_COLOR_CURSOR, -1, COLOR_GREEN);
+	init_pair(TERMINE_COLOR_MINE, -1, COLOR_RED);
+	init_pair(TERMINE_COLOR_FLAG, COLOR_YELLOW, -1);
+	init_pair(TERMINE_COLOR_1, COLOR_BLUE, -1);
+	init_pair(TERMINE_COLOR_2, COLOR_GREEN, -1);
+	init_pair(TERMINE_COLOR_3, COLOR_RED, -1);
+	init_pair(TERMINE_COLOR_4, COLOR_YELLOW, -1);
+	// TODO: Set colors for 5,6,7,8
 	
 	// Create window where we will draw the board. Add 2
 	// to the window size so we can draw a box around it
