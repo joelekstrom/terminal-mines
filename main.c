@@ -16,17 +16,15 @@ int main(int argc, char **argv) {
 	char text[] = "HELURRRRRR!!!";
 
 	// Create the game board
+	srand(time(NULL));
 	struct board b;
-	board_init(&b, 10, 10, 0.2);
+	board_init(&b, 20, 10, 0.1);
 
 	// Set up colors
 	use_default_colors();
 	init_pair(1, COLOR_YELLOW, COLOR_GREEN); // Cursor
 	init_pair(2, COLOR_YELLOW, COLOR_RED); // Mine
 	init_pair(3, -1, -1); // Default colors
-
-	// Make sure this game is actually interesting
-	srand(time(NULL));
 	
 	// Create window where we will draw the board. Add 2
 	// to the window size so we can draw a box around it
