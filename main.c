@@ -40,7 +40,7 @@ int main(int argc, char **argv) {
 	// Listen for keyboard input
 	keypad(stdscr, TRUE);
 	int ch;
-	while((ch = getch()) != KEY_F(1)) {	
+	while((ch = getch()) != KEY_F(1) && !b.game_over) {
 		switch(ch) {	
 		case KEY_LEFT:
 		case 'h':
@@ -71,6 +71,7 @@ int main(int argc, char **argv) {
 			open_tile(&b);
 			break;
 		}
+
 		render(board_win, &b);
 		wrefresh(board_win);
 	}

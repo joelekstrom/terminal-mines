@@ -1,5 +1,6 @@
 #include <ncurses.h>
 #include <stdlib.h>
+#include <stdbool.h>
 
 #ifndef BOARD_H
 #define BOARD_H
@@ -22,6 +23,7 @@ struct board {
 	int height;
 	int cursor_x;
 	int cursor_y;
+	bool game_over;
 	uint8_t *data;
 };
 

@@ -1,6 +1,5 @@
 #include "board.h"
 #include <stdlib.h>
-#include <stdbool.h>
 
 uint8_t* get_tile(struct board *board, int x, int y);
 void generate_mines(struct board *board, float mine_density);
@@ -60,12 +59,18 @@ void board_deinit(struct board *board) {
 	free(board->data);
 }
 
+
+
 void open_tile(struct board *board) {
 	uint8_t* tile = get_tile(board, board->cursor_x, board->cursor_y);
 	if (*tile & TILE_FLAG) {
 		flash();
-	} else {
-		*tile |= TILE_OPENED;
+		return;
+	}
+
+	*tile |= TILE_OPENED;
+	if (*tile & TILE_MINE) {
+		board->game_over = true;
 	}
 }
 
@@ -115,28 +120,21 @@ void move_cursor(struct board *board, enum direction direction) {
 }
 
 char char_at_tile(struct board *board, int x, int y) {
-	uint8_t *tile = get_tile(board, x, y);
-	switch (*tile & 0x0F) {
-	case TILE_MINE | TILE_OPENED:
-	case TILE_MINE | TILE_OPENED | TILE_FLAG:
-		return '*';
-
-	case TILE_FLAG:
-	case TILE_FLAG | TILE_MINE:
-		return 'F';
-
-	case TILE_OPENED | TILE_FLAG:
-	case TILE_OPENED: {
+	uint8_t* tile = get_tile(board, x, y);
+	if ((*tile & TILE_MINE) && board->game_over) {
+		if (board->game_over) {
+			return '*';
+		}
+	} else if (*tile & TILE_OPENED) {
 		uint8_t adj_count = adjacent_mine_count(tile);
 		if (adj_count > 0) {
 			return '0' + adj_count;
 		}
 		return '.';
+	} else if (*tile & TILE_FLAG) {
+		return 'F';
 	}
-
-	default:
-		return '#';
-	}
+	return '#';
 }
 
 void render(WINDOW *window, struct board *board) {
