@@ -26,8 +26,7 @@ uint8_t adjacent_mine_count(uint8_t* tile) {
 void increment_adjacent_mine_count(uint8_t* tile) {
 	uint8_t value = adjacent_mine_count(tile) + 1;
 	uint8_t shifted_value = value << 4;
-	uint8_t final_value = shifted_value | (*tile & 0x0F);
-	*tile = final_value;
+	*tile = shifted_value | (*tile & 0x0F);
 }
 
 void place_mine(struct board *board, int x, int y) {
@@ -63,7 +62,16 @@ void board_deinit(struct board *board) {
 
 void open_tile(struct board *board) {
 	uint8_t* tile = get_tile(board, board->cursor_x, board->cursor_y);
-	*tile |= TILE_OPENED;
+	if (*tile & TILE_FLAG) {
+		flash();
+	} else {
+		*tile |= TILE_OPENED;
+	}
+}
+
+void toggle_flag(struct board *board) {
+	uint8_t* tile = get_tile(board, board->cursor_x, board->cursor_y);
+	*tile ^= TILE_FLAG;
 }
 
 bool is_out_of_bounds(struct board *b, int x, int y) {
@@ -109,12 +117,15 @@ void move_cursor(struct board *board, enum direction direction) {
 char char_at_tile(struct board *board, int x, int y) {
 	uint8_t *tile = get_tile(board, x, y);
 	switch (*tile & 0x0F) {
-	case TILE_OPENED | TILE_MINE:
+	case TILE_MINE | TILE_OPENED:
+	case TILE_MINE | TILE_OPENED | TILE_FLAG:
 		return '*';
 
 	case TILE_FLAG:
+	case TILE_FLAG | TILE_MINE:
 		return 'F';
 
+	case TILE_OPENED | TILE_FLAG:
 	case TILE_OPENED: {
 		uint8_t adj_count = adjacent_mine_count(tile);
 		if (adj_count > 0) {
@@ -135,13 +146,13 @@ void render(WINDOW *window, struct board *board) {
 			int is_cursor = (x == board->cursor_x && y == board->cursor_y) ? 1 : 0;
 			if (is_cursor) {
 				wattron(window, COLOR_PAIR(1));
+			} else if (sprite == '*') {
+				wattron(window, COLOR_PAIR(2));
+			} else {
+				wattron(window, COLOR_PAIR(3));
 			}
 			
 			mvwaddch(window, y + 1, x + 1, sprite);
-
-			if (is_cursor) {
-				wattroff(window, COLOR_PAIR(1));
-			}
 		}
 	}
 }

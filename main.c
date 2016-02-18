@@ -20,7 +20,10 @@ int main(int argc, char **argv) {
 	board_init(&b, 10, 10, 0.2);
 
 	// Set up colors
-	init_pair(1, COLOR_YELLOW, COLOR_GREEN); // Cursors
+	use_default_colors();
+	init_pair(1, COLOR_YELLOW, COLOR_GREEN); // Cursor
+	init_pair(2, COLOR_YELLOW, COLOR_RED); // Mine
+	init_pair(3, -1, -1); // Default colors
 
 	// Make sure this game is actually interesting
 	srand(time(NULL));
@@ -39,29 +42,34 @@ int main(int argc, char **argv) {
 	int ch;
 	while((ch = getch()) != KEY_F(1)) {	
 		switch(ch) {	
-			case KEY_LEFT:
-			case 'h':
-				move_cursor(&b, LEFT);
-				break;
+		case KEY_LEFT:
+		case 'h':
+			move_cursor(&b, LEFT);
+			break;
 
-			case KEY_RIGHT:
-			case 'l':
-				move_cursor(&b, RIGHT);
-				break;
+		case KEY_RIGHT:
+		case 'l':
+			move_cursor(&b, RIGHT);
+			break;
 
-			case KEY_UP:
-			case 'k':
-				move_cursor(&b, UP);
-				break;
+		case KEY_UP:
+		case 'k':
+			move_cursor(&b, UP);
+			break;
 
-			case KEY_DOWN:
-		    case 'j':
-				move_cursor(&b, DOWN);
-				break;
+		case KEY_DOWN:
+		case 'j':
+			move_cursor(&b, DOWN);
+			break;
 
-		    case ',':
-				open_tile(&b);
-				break;
+		case 'g':
+		case 'f':
+			toggle_flag(&b);
+			break;
+
+		case ',':
+			open_tile(&b);
+			break;
 		}
 		render(board_win, &b);
 		wrefresh(board_win);
