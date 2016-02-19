@@ -1,10 +1,9 @@
 #include "board.h"
-#include <stdlib.h>
 
 #define MAX(A, B) A > B ? A : B
 #define MIN(A, B) A < B ? A : B
 
-uint8_t* get_tile(struct board *board, int x, int y);
+uint8_t* get_tile_at(struct board *board, int x, int y);
 void open_tile(uint8_t* tile);
 
 void board_init(struct board *board, int width, int height, float mine_density) {
@@ -34,14 +33,14 @@ void increment_adjacent_mine_count(uint8_t* tile) {
 }
 
 void place_mine(struct board *board, int x, int y) {
-	uint8_t* tile = get_tile(board, x, y);
+	uint8_t* tile = get_tile_at(board, x, y);
 	*tile |= TILE_MINE;
 
 	// Enumerate all adjacent tiles and increase their
 	// "adjacent mine count" by one
 	for (int i = x - 1; i <= x + 1; i++) {
 		for (int j = y - 1; j <= y + 1; j++) {
-			uint8_t* adjacent_tile = get_tile(board, i, j);
+			uint8_t* adjacent_tile = get_tile_at(board, i, j);
 			if (adjacent_tile && adjacent_tile != tile) {
 				increment_adjacent_mine_count(adjacent_tile);
 			}
@@ -68,7 +67,7 @@ void board_deinit(struct board *board) {
 void open_adjacent_tiles(struct board *board, int x, int y) {
 	for (int i = x - 1; i <= x + 1; i++) {
 		for (int j = y - 1; j <= y + 1; j++) {
-			uint8_t* adjacent_tile = get_tile(board, i, j);
+			uint8_t* adjacent_tile = get_tile_at(board, i, j);
 			if (adjacent_tile && !(*adjacent_tile & TILE_OPENED) && !(*adjacent_tile & TILE_FLAG)) {
 				open_tile(adjacent_tile);
 				if (*adjacent_tile & TILE_MINE) {
@@ -89,11 +88,11 @@ void open_tile_at_cursor(struct board *board) {
 		generate_mines(board);
 	}
 
-	uint8_t* tile = get_tile(board, board->cursor_x, board->cursor_y);
+	uint8_t* tile = get_tile_at(board, board->cursor_x, board->cursor_y);
 
 	// If this tile is already opened and has a mine count,
 	// it should open all adjacent tiles instead. This mimics
-	// the behaviour on the original minesweeper where you can
+	// the behaviour in the original minesweeper where you can
 	// right click opened tiles to open adjacent tiles quickly.
 	if (*tile & TILE_OPENED && adjacent_mine_count(tile) > 0) {
 		open_adjacent_tiles(board, board->cursor_x, board->cursor_y);
@@ -101,7 +100,6 @@ void open_tile_at_cursor(struct board *board) {
 	}
 
 	if (*tile & TILE_FLAG) {
-		flash();
 		return;
 	}
 
@@ -115,7 +113,7 @@ void open_tile_at_cursor(struct board *board) {
 }
 
 void toggle_flag_at_cursor(struct board *board) {
-	uint8_t* tile = get_tile(board, board->cursor_x, board->cursor_y);
+	uint8_t* tile = get_tile_at(board, board->cursor_x, board->cursor_y);
 	*tile ^= TILE_FLAG;
 }
 
@@ -132,7 +130,7 @@ bool is_out_of_bounds(struct board *b, int x, int y) {
  * will return NULL if the tile is out of bounds. This
  * is to simplify code that enumerates "adjacent" tiles.
  */
-uint8_t* get_tile(struct board *board, int x, int y) {
+uint8_t* get_tile_at(struct board *board, int x, int y) {
 	if (is_out_of_bounds(board, x, y))
 		return NULL;
 	return &board->data[board->width * y + x];
@@ -152,45 +150,5 @@ void move_cursor(struct board *board, enum direction direction) {
 	case DOWN:
 		board->cursor_y = MIN(board->cursor_y + 1, board->height - 1);
 		break;
-	}
-}
-
-char char_at_tile(struct board *board, int x, int y) {
-	uint8_t* tile = get_tile(board, x, y);
-	if ((*tile & TILE_MINE) && board->game_over) {
-		if (board->game_over) {
-			return '*';
-		}
-	} else if (*tile & TILE_OPENED) {
-		uint8_t adj_count = adjacent_mine_count(tile);
-		if (adj_count > 0) {
-			return '0' + adj_count;
-		}
-		return '.';
-	} else if (*tile & TILE_FLAG) {
-		return 'F';
-	}
-	return '#';
-}
-
-void render(WINDOW *window, struct board *board) {
-	for (int x = 0; x < board->width; x++) {
-		for (int y = 0; y < board->height; y++) {
-   			char sprite = char_at_tile(board, x, y);			
-			int is_cursor = (x == board->cursor_x && y == board->cursor_y) ? 1 : 0;
-			if (is_cursor) {
-				wattron(window, COLOR_PAIR(TERMINE_COLOR_CURSOR));
-			} else if (sprite == '*') {
-				wattron(window, COLOR_PAIR(TERMINE_COLOR_MINE));
-			} else if (sprite == 'F') {
-				wattron(window, COLOR_PAIR(TERMINE_COLOR_FLAG));
-			} else if (sprite >= '1' && sprite <= '8') {
-				wattron(window, COLOR_PAIR(TERMINE_COLOR_1 + (sprite - '1')));
-			} else {
-				wattron(window, COLOR_PAIR(TERMINE_COLOR_DEFAULT));
-			}
-			
-			mvwaddch(window, y + 1, x + 1, sprite);
-		}
 	}
 }

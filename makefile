@@ -1,2 +1,2 @@
-sweeper: main.c board.c
-	clang main.c board.c -o sweeper -lncurses
+sweeper: main.c game_logic/* frontends/*
+	clang main.c game_logic/board.c frontends/curses.c -Igame_logic -Ifrontends -o sweeper -lncurses
