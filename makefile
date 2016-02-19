@@ -1,12 +1,14 @@
+C_FLAGS = -std=c99 -Wall
+
 bin/sweeper: bin main.c game_logic/* frontends/*
-	clang main.c game_logic/board.c frontends/curses.c -Igame_logic -Ifrontends -o bin/sweeper -lncurses
+	$(CC) $(C_FLAGS) main.c game_logic/board.c frontends/curses.c -Igame_logic -Ifrontends -o bin/sweeper -lncurses
 
 bin:
 	mkdir bin
 
 .PHONY: test, clean
 test: bin
-	clang tests/board_tests.c game_logic/board.c -Igame_logic -Itests -o bin/test
+	$(CC) $(C_FLAGS) tests/board_tests.c game_logic/board.c -Igame_logic -Itests -o bin/test
 	bin/test
 
 clean:
