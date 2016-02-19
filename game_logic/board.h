@@ -2,6 +2,7 @@
 #define BOARD_H
 
 #include <stdlib.h>
+#include <stdint.h>
 #include <stdbool.h>
 
 enum {
