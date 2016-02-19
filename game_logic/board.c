@@ -17,6 +17,35 @@ void board_init(struct board *board, int width, int height, float mine_density) 
 	board->data = calloc(sizeof(uint8_t), width * height);
 }
 
+bool is_out_of_bounds(struct board *b, int x, int y) {
+	return x < 0 || x >= b->width || y < 0 || y >= b->height;
+}
+
+/**
+ * Get a pointer to a tile. Contains bounds checking and
+ * will return NULL if the tile is out of bounds. This
+ * is to simplify code that enumerates "adjacent" tiles.
+ */
+uint8_t* get_tile_at(struct board *board, int x, int y) {
+	if (is_out_of_bounds(board, x, y))
+		return NULL;
+	return &board->data[board->width * y + x];
+}
+
+void get_adjacent_tiles(struct board *board, uint8_t *tile, uint8_t **adjacent_tiles) {
+	int tile_index = tile - board->data;
+	int y = tile_index / board->width;
+	int x = tile_index % board->width;
+	adjacent_tiles[0] = get_tile_at(board, x - 1, y - 1);
+	adjacent_tiles[1] = get_tile_at(board, x - 1, y);
+	adjacent_tiles[2] = get_tile_at(board, x - 1, y + 1);
+	adjacent_tiles[3] = get_tile_at(board, x, y - 1);
+	adjacent_tiles[4] = get_tile_at(board, x, y + 1);
+	adjacent_tiles[5] = get_tile_at(board, x + 1, y - 1);
+	adjacent_tiles[6] = get_tile_at(board, x + 1, y);
+	adjacent_tiles[7] = get_tile_at(board, x + 1, y + 1);
+}
+
 /**
  * We use the last 4 bits of a tile for tile data such as
  * opened, mine, flag etc. the first 4 stores a count of
@@ -33,17 +62,16 @@ void increment_adjacent_mine_count(uint8_t* tile) {
 }
 
 void place_mine(struct board *board, int x, int y) {
-	uint8_t* tile = get_tile_at(board, x, y);
+	uint8_t *tile = get_tile_at(board, x, y);
 	*tile |= TILE_MINE;
 
-	// Enumerate all adjacent tiles and increase their
-	// "adjacent mine count" by one
-	for (int i = x - 1; i <= x + 1; i++) {
-		for (int j = y - 1; j <= y + 1; j++) {
-			uint8_t* adjacent_tile = get_tile_at(board, i, j);
-			if (adjacent_tile && adjacent_tile != tile) {
-				increment_adjacent_mine_count(adjacent_tile);
-			}
+	// Increase the mine counts on all adjacent tiles
+	uint8_t *adjacent_tiles[8];
+	get_adjacent_tiles(board, tile, adjacent_tiles);
+	for (int i = 0; i < 8; i++) {
+		uint8_t *adjacent_tile = adjacent_tiles[i];
+		if (adjacent_tile) {
+			increment_adjacent_mine_count(adjacent_tile);
 		}
 	}
 }
@@ -64,20 +92,20 @@ void board_deinit(struct board *board) {
 	free(board->data);
 }
 
-void open_adjacent_tiles(struct board *board, int x, int y) {
-	for (int i = x - 1; i <= x + 1; i++) {
-		for (int j = y - 1; j <= y + 1; j++) {
-			uint8_t* adjacent_tile = get_tile_at(board, i, j);
-			if (adjacent_tile && !(*adjacent_tile & TILE_OPENED) && !(*adjacent_tile & TILE_FLAG)) {
-				open_tile(adjacent_tile);
-				if (*adjacent_tile & TILE_MINE) {
-					board->game_over = true;
-					return;
-				}
+void open_adjacent_tiles(struct board *board, uint8_t *tile) {
+	uint8_t *adjacent_tiles[8];
+	get_adjacent_tiles(board, tile, adjacent_tiles);
+	for (int i = 0; i < 8; i++) {
+		uint8_t *adjacent_tile = adjacent_tiles[i];
+		if (adjacent_tile && !(*adjacent_tile & TILE_OPENED) && !(*adjacent_tile & TILE_FLAG)) {
+			open_tile(adjacent_tile);
+			if (*adjacent_tile & TILE_MINE) {
+				board->game_over = true;
+				return;
+			}
 
-				if (adjacent_mine_count(adjacent_tile) == 0) {
-					open_adjacent_tiles(board, i, j);
-				}
+			if (adjacent_mine_count(adjacent_tile) == 0) {
+				open_adjacent_tiles(board, adjacent_tile);
 			}
 		}
 	}
@@ -95,7 +123,7 @@ void open_tile_at_cursor(struct board *board) {
 	// the behaviour in the original minesweeper where you can
 	// right click opened tiles to open adjacent tiles quickly.
 	if (*tile & TILE_OPENED && adjacent_mine_count(tile) > 0) {
-		open_adjacent_tiles(board, board->cursor_x, board->cursor_y);
+		open_adjacent_tiles(board, tile);
 		return;
 	}
 
@@ -108,7 +136,7 @@ void open_tile_at_cursor(struct board *board) {
 	if (*tile & TILE_MINE) {
 		board->game_over = true;
 	} else if (adjacent_mine_count(tile) == 0) {
-		open_adjacent_tiles(board, board->cursor_x, board->cursor_y);
+		open_adjacent_tiles(board, tile);
 	}
 }
 
@@ -119,21 +147,6 @@ void toggle_flag_at_cursor(struct board *board) {
 
 void open_tile(uint8_t *tile) {
 	*tile |= TILE_OPENED;
-}
-
-bool is_out_of_bounds(struct board *b, int x, int y) {
-	return x < 0 || x >= b->width || y < 0 || y >= b->height;
-}
-
-/**
- * Get a pointer to a tile. Contains bounds checking and
- * will return NULL if the tile is out of bounds. This
- * is to simplify code that enumerates "adjacent" tiles.
- */
-uint8_t* get_tile_at(struct board *board, int x, int y) {
-	if (is_out_of_bounds(board, x, y))
-		return NULL;
-	return &board->data[board->width * y + x];
 }
 
 void move_cursor(struct board *board, enum direction direction) {
