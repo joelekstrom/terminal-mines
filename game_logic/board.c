@@ -9,8 +9,8 @@ void open_tile(uint8_t* tile);
 void board_init(struct board *board, int width, int height, float mine_density) {
 	board->width = width;
 	board->height = height;
-	board->cursor_x = 1;
-	board->cursor_y = 1;
+	board->cursor_x = width / 2;
+	board->cursor_y = height / 2;
 	board->mine_density = mine_density;
 	board->mines_placed = false;
 	board->game_over = false;
