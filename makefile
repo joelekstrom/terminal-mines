@@ -1,15 +1,25 @@
 C_FLAGS = -std=c99 -Wall
 
-bin/sweeper: bin main.c game_logic/* frontends/*
-	$(CC) $(C_FLAGS) main.c game_logic/board.c frontends/curses.c -Igame_logic -Ifrontends -o bin/sweeper -lncurses
+executable = bin/terminal-mines
+library = bin/libminesweeper.a
+
+$(executable): $(library) frontends/ncurses/*.c
+	$(CC) $(C_FLAGS) frontends/ncurses/*.c -Ilib -Ifrontends/ncurses -Lbin -o $@ -lncurses -lminesweeper
+
+$(library): bin lib/board.c
+	$(CC) $(C_FLAGS) -c lib/board.c -o bin/board.o
+	ar rcs $@ bin/board.o
+	rm bin/board.o
 
 bin:
 	mkdir bin
 
 .PHONY: test, clean
-test: bin
-	$(CC) $(C_FLAGS) tests/board_tests.c game_logic/board.c -Igame_logic -Itests -o bin/test
+test: bin/test
 	bin/test
+
+bin/test: $(library)
+	$(CC) $(C_FLAGS) tests/board_tests.c -Ilib -Itests -Lbin -lminesweeper -o $@
 
 clean:
 	rm -rf bin/
