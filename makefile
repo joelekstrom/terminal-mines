@@ -6,13 +6,11 @@ library = bin/libminesweeper.a
 $(executable): $(library) frontends/ncurses/*.c
 	$(CC) $(C_FLAGS) frontends/ncurses/*.c -Ilib -Ifrontends/ncurses -Lbin -o $@ -lncurses -lminesweeper
 
-$(library): bin lib/board.c
+$(library): lib/board.c
+	mkdir -p bin
 	$(CC) $(C_FLAGS) -c lib/board.c -o bin/board.o
 	ar rcs $@ bin/board.o
 	rm bin/board.o
-
-bin:
-	mkdir bin
 
 .PHONY: test, clean
 test: bin/test
