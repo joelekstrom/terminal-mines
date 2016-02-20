@@ -61,8 +61,7 @@ void increment_adjacent_mine_count(uint8_t* tile) {
 	*tile = shifted_value | (*tile & 0x0F);
 }
 
-void place_mine(struct board *board, int x, int y) {
-	uint8_t *tile = get_tile_at(board, x, y);
+void place_mine(struct board *board, uint8_t *tile) {
 	*tile |= TILE_MINE;
 
 	// Increase the mine counts on all adjacent tiles
@@ -76,16 +75,17 @@ void place_mine(struct board *board, int x, int y) {
 	}
 }
 
-void generate_mines(struct board *board) {
-	for (int x = 0; x < board->width; x++) {
-		for (int y = 0; y < board->height; y++) {
-			float r = (float)rand() / (float)RAND_MAX;
-			if (r < board->mine_density && !(x == board->cursor_x && y == board->cursor_y)) {
-				place_mine(board, x, y);
-			}
+void generate_mines(struct board *board, uint8_t *safe_tile) {
+	long tile_count = board->width * board->height;
+	long mine_count = tile_count * board->mine_density;
+	for (long i = 0; i < mine_count; i++) {
+		float r = (float)rand() / (float)RAND_MAX;
+		long random_index = r * (tile_count - 1);
+		uint8_t *random_tile = &board->data[random_index];
+		if (random_tile != safe_tile) {
+			place_mine(board, random_tile);
 		}
 	}
-	board->mines_placed = true;
 }
 
 void board_deinit(struct board *board) {
@@ -112,11 +112,12 @@ void open_adjacent_tiles(struct board *board, uint8_t *tile) {
 }
 
 void open_tile_at_cursor(struct board *board) {
-	if (!board->mines_placed) {
-		generate_mines(board);
-	}
-
 	uint8_t* tile = get_tile_at(board, board->cursor_x, board->cursor_y);
+
+	if (!board->mines_placed) {
+		generate_mines(board, tile);
+		board->mines_placed = true;
+	}
 
 	// If this tile is already opened and has a mine count,
 	// it should open all adjacent tiles instead. This mimics
