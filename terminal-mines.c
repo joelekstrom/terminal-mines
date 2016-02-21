@@ -1,5 +1,6 @@
-#include <curses.h>
+#include <minesweeper.h>
 #include <ncurses.h>
+#include <time.h>
 
 enum {
 	COLOR_PAIR_DEFAULT = 1,
@@ -21,6 +22,16 @@ void start_with_board(struct board *board);
 char char_at_tile(struct board *board, int x, int y);
 void game_loop(WINDOW *window, struct board *board);
 void render_board(struct board *board, WINDOW *window);
+
+int main(int argc, char **argv) {
+	// Set up a game board
+	srand(time(NULL));
+	struct board b;
+	board_init(&b, 20, 10, 0.1);
+
+	// Start the ncurses frontend
+	start_with_board(&b);
+}
 
 void start_with_board(struct board *board) {
 	initscr();
