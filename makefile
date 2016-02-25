@@ -10,4 +10,5 @@ $(libminesweeper):
 	$(MAKE) -C libminesweeper
 
 clean:
-	-rm $(executable)
+	rm -f $(executable)
+	$(MAKE) -C libminesweeper clean

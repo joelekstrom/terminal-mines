@@ -1,6 +1,7 @@
 #include <minesweeper.h>
 #include <ncurses.h>
 #include <time.h>
+#include <stdlib.h>
 
 enum {
 	COLOR_PAIR_DEFAULT = 1,
@@ -26,11 +27,14 @@ void render_board(struct board *board, WINDOW *window);
 int main(int argc, char **argv) {
 	// Set up a game board
 	srand(time(NULL));
-	struct board b;
-	board_init(&b, 20, 10, 0.1);
+	int width = 20;
+	int height = 10;
+	uint8_t *buffer = malloc(minimum_buffer_size(width, height));
+	struct board *b = board_init(width, height, 0.1, buffer);
 
 	// Start the ncurses frontend
-	start_with_board(&b);
+	start_with_board(b);
+	free(buffer);
 }
 
 void start_with_board(struct board *board) {
@@ -45,8 +49,8 @@ void start_with_board(struct board *board) {
 
 	// Create window where we will draw the board. Add 2
 	// tiles padding so we can draw a box around it
-	int window_width = board->width + 2;
-	int window_height = board->height + 2;
+	int window_width = board->_width + 2;
+	int window_height = board->_height + 2;
 	WINDOW *board_win = newwin(window_height, window_width, screen_height / 2 - window_height / 2, screen_width / 2 - window_width / 2);
 	box(board_win, 0, 0);
 
@@ -62,7 +66,7 @@ void game_loop(WINDOW *window, struct board *board) {
 	// Wait for keyboard input
 	keypad(stdscr, TRUE);
 	int ch;
-	while((ch = getch()) != KEY_F(1) && !board->game_over) {
+	while((ch = getch()) != KEY_F(1) && !board->_game_over) {
 		switch(ch) {	
 		case KEY_LEFT:
 		case 'h':
@@ -117,8 +121,8 @@ void init_colors() {
 
 char char_at_tile(struct board *board, int x, int y) {
 	uint8_t* tile = get_tile_at(board, x, y);
-	if ((*tile & TILE_MINE) && board->game_over) {
-		if (board->game_over) {
+	if ((*tile & TILE_MINE) && board->_game_over) {
+		if (board->_game_over) {
 			return '*';
 		}
 	} else if (*tile & TILE_OPENED) {
@@ -134,8 +138,8 @@ char char_at_tile(struct board *board, int x, int y) {
 }
 
 void render_board(struct board *board, WINDOW *window) {
-	for (int x = 0; x < board->width; x++) {
-		for (int y = 0; y < board->height; y++) {
+	for (int x = 0; x < board->_width; x++) {
+		for (int y = 0; y < board->_height; y++) {
    			char sprite = char_at_tile(board, x, y);			
 			int is_cursor = (x == board->cursor_x && y == board->cursor_y) ? 1 : 0;
 			if (is_cursor) {
