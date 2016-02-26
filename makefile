@@ -3,7 +3,7 @@ C_FLAGS = -std=c99 -Wall
 executable = terminal-mines
 libminesweeper = libminesweeper/libminesweeper.a
 
-$(executable): $(libminesweeper)
+$(executable): $(libminesweeper) terminal-mines.c
 	$(CC) $(C_FLAGS) *.c -Ilibminesweeper/include -Llibminesweeper -o $@ -lncurses -lminesweeper
 
 $(libminesweeper):
