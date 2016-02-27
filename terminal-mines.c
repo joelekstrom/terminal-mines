@@ -4,6 +4,7 @@
 #include <stdlib.h>
 #include <getopt.h>
 #include <inttypes.h>
+#include <string.h>
 
 enum {
 	COLOR_PAIR_DEFAULT = 1,
@@ -117,7 +118,7 @@ void game_loop(WINDOW *window, struct board *board) {
 	// Wait for keyboard input
 	keypad(stdscr, TRUE);
 	int ch;
-	while((ch = getch()) != KEY_F(1) && !board->_game_over) {
+	while((ch = getch()) != KEY_F(1) && (board->_state == BOARD_PENDING_START || board->_state == BOARD_PLAYING)) {
 		switch(ch) {	
 		case KEY_LEFT:
 		case 'h':
@@ -153,6 +154,21 @@ void game_loop(WINDOW *window, struct board *board) {
 		wrefresh(window);
 	}
 
+	char *end_text = NULL;
+	if (board->_state == BOARD_GAME_OVER) {
+		end_text = "You failed!";
+	} else if (board->_state == BOARD_WIN) {
+		end_text = "You win! Niiiice!";
+	}
+
+	int screen_width, screen_height;
+	getmaxyx(stdscr, screen_height, screen_width);
+	int window_width = strlen(end_text) + 2;
+	WINDOW *end_win = newwin(3, window_width, screen_height / 2 - 2, screen_width / 2 - window_width / 2);
+	box(end_win, 0, 0);
+	mvwprintw(end_win, 1, 1, end_text);
+	wrefresh(end_win);
+
  	wgetch(window);
  	endwin();
 }
@@ -172,10 +188,8 @@ void init_colors() {
 
 char char_at_tile(struct board *board, int x, int y) {
 	uint8_t* tile = get_tile_at(board, x, y);
-	if ((*tile & TILE_MINE) && board->_game_over) {
-		if (board->_game_over) {
-			return '*';
-		}
+	if ((*tile & TILE_MINE) && board->_state == BOARD_GAME_OVER) {
+		return '*';
 	} else if (*tile & TILE_OPENED) {
 		uint8_t adj_count = adjacent_mine_count(tile);
 		if (adj_count > 0) {
