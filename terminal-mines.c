@@ -122,22 +122,22 @@ void game_loop(WINDOW *window, struct board *board) {
 		switch(ch) {	
 		case KEY_LEFT:
 		case 'h':
-			move_cursor(board, LEFT);
+			move_cursor(board, LEFT, true);
 			break;
 
 		case KEY_RIGHT:
 		case 'l':
-			move_cursor(board, RIGHT);
+			move_cursor(board, RIGHT, true);
 			break;
 
 		case KEY_UP:
 		case 'k':
-			move_cursor(board, UP);
+			move_cursor(board, UP, true);
 			break;
 
 		case KEY_DOWN:
 		case 'j':
-			move_cursor(board, DOWN);
+			move_cursor(board, DOWN, true);
 			break;
 
 		case 'g':
