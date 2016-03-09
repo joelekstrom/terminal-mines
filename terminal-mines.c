@@ -29,10 +29,13 @@ char char_at_tile(struct board *board, int x, int y);
 void start_with_board(struct board *board);
 void game_loop(WINDOW *window, struct board *board);
 void render_board(struct board *board, WINDOW *window);
+void tile_changed(struct board *board, uint8_t *tile, int x, int y);
+void update_tile(struct board *board, WINDOW *window, int x, int y);
 
 int width = 20;
 int height = 10;
 float mine_density = 0.1;
+WINDOW *board_win;
 
 int main(int argc, char **argv) {
 	parse_options(argc, argv);
@@ -42,6 +45,7 @@ int main(int argc, char **argv) {
 	srand(time(NULL));
 	uint8_t *buffer = malloc(minimum_buffer_size(width, height));
 	struct board *b = board_init(width, height, mine_density, buffer);
+	b->on_tile_updated = &tile_changed;
 
 	// Start the ncurses frontend
 	start_with_board(b);
@@ -103,7 +107,7 @@ void start_with_board(struct board *board) {
 	// tiles padding so we can draw a box around it
 	int window_width = board->_width + 2;
 	int window_height = board->_height + 2;
-	WINDOW *board_win = newwin(window_height, window_width, screen_height / 2 - window_height / 2, screen_width / 2 - window_width / 2);
+	board_win = newwin(window_height, window_width, screen_height / 2 - window_height / 2, screen_width / 2 - window_width / 2);
 	box(board_win, 0, 0);
 
 	// Draw an initial representation so you see the window when the game starts
@@ -114,11 +118,17 @@ void start_with_board(struct board *board) {
 	game_loop(board_win, board);
 }
 
+void tile_changed(struct board *board, uint8_t *tile, int x, int y) {
+	update_tile(board, board_win, x, y);
+}
+
 void game_loop(WINDOW *window, struct board *board) {
 	// Wait for keyboard input
 	keypad(stdscr, TRUE);
 	int ch;
 	while((ch = getch()) != KEY_F(1) && (board->_state == BOARD_PENDING_START || board->_state == BOARD_PLAYING)) {
+		int previous_x = board->cursor_x;
+		int previous_y = board->cursor_y;
 		switch(ch) {	
 		case KEY_LEFT:
 		case 'h':
@@ -150,9 +160,16 @@ void game_loop(WINDOW *window, struct board *board) {
 			break;
 		}
 
-		render_board(board, window);
+		if (board->cursor_x != previous_x || board->cursor_y != previous_y) {
+			update_tile(board, window, previous_x, previous_y);
+			update_tile(board, window, board->cursor_x, board->cursor_y);
+		}
+
 		wrefresh(window);
 	}
+
+	render_board(board, window);
+	wrefresh(window);
 
 	char *end_text = NULL;
 	if (board->_state == BOARD_GAME_OVER) {
@@ -169,7 +186,7 @@ void game_loop(WINDOW *window, struct board *board) {
 	mvwprintw(end_win, 1, 1, end_text);
 	wrefresh(end_win);
 
- 	wgetch(window);
+	wgetch(window);
  	endwin();
 }
 
@@ -186,9 +203,8 @@ void init_colors() {
 	// TODO: Set colors for 5,6,7,8
 }
 
-char char_at_tile(struct board *board, int x, int y) {
-	uint8_t* tile = get_tile_at(board, x, y);
-	if ((*tile & TILE_MINE) && board->_state == BOARD_GAME_OVER) {
+char char_for_tile(struct board *board, uint8_t *tile) {
+	if (((*tile & TILE_MINE) && board->_state == BOARD_GAME_OVER) || (*tile & TILE_MINE && *tile & TILE_OPENED)) {
 		return '*';
 	} else if (*tile & TILE_OPENED) {
 		uint8_t adj_count = adjacent_mine_count(tile);
@@ -202,26 +218,31 @@ char char_at_tile(struct board *board, int x, int y) {
 	return '#';
 }
 
+void update_tile(struct board *board, WINDOW *window, int x, int y) {
+	uint8_t *tile = get_tile_at(board, x, y);
+	char sprite = char_for_tile(board, tile);
+	int is_cursor = (x == board->cursor_x && y == board->cursor_y) ? 1 : 0;
+	if (sprite == '*') {
+		wattron(window, COLOR_PAIR(COLOR_PAIR_MINE));
+	} else if (is_cursor) {
+		wattron(window, COLOR_PAIR(COLOR_PAIR_CURSOR));
+	} else if (sprite == 'F') {
+		wattron(window, COLOR_PAIR(COLOR_PAIR_FLAG));
+	} else if (sprite >= '1' && sprite <= '8') {
+		wattron(window, COLOR_PAIR(COLOR_PAIR_1 + (sprite - '1')));
+	} else {
+		wattron(window, COLOR_PAIR(COLOR_PAIR_DEFAULT));
+	}
+
+	// Add 1 to the position in both axes so we stay within the
+	// window border.
+	mvwaddch(window, y + 1, x + 1, sprite);
+}
+
 void render_board(struct board *board, WINDOW *window) {
 	for (int x = 0; x < board->_width; x++) {
 		for (int y = 0; y < board->_height; y++) {
-   			char sprite = char_at_tile(board, x, y);			
-			int is_cursor = (x == board->cursor_x && y == board->cursor_y) ? 1 : 0;
-			if (is_cursor) {
-				wattron(window, COLOR_PAIR(COLOR_PAIR_CURSOR));
-			} else if (sprite == '*') {
-				wattron(window, COLOR_PAIR(COLOR_PAIR_MINE));
-			} else if (sprite == 'F') {
-				wattron(window, COLOR_PAIR(COLOR_PAIR_FLAG));
-			} else if (sprite >= '1' && sprite <= '8') {
-				wattron(window, COLOR_PAIR(COLOR_PAIR_1 + (sprite - '1')));
-			} else {
-				wattron(window, COLOR_PAIR(COLOR_PAIR_DEFAULT));
-			}
-
-			// Add 1 to the position in both axes so we stay within the
-			// window border.
-			mvwaddch(window, y + 1, x + 1, sprite);
+			update_tile(board, window, x, y);
 		}
 	}
 }
