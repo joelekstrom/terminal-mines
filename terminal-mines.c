@@ -97,6 +97,7 @@ void setup_ncurses() {
 	cbreak();
 	noecho();
 	init_colors();
+	curs_set(0);
 }
 
 void start_with_board(struct board *board) {
