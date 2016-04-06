@@ -36,6 +36,7 @@ int width = 20;
 int height = 10;
 float mine_density = 0.1;
 WINDOW *board_win;
+WINDOW *status_win;
 
 int main(int argc, char **argv) {
 	parse_options(argc, argv);
@@ -100,6 +101,23 @@ void setup_ncurses() {
 	curs_set(0);
 }
 
+void update_status_window(struct board *board) {
+	int window_width = board->_width;
+
+	char mine_text[128];
+	char flag_text[128];
+	snprintf(mine_text, sizeof(mine_text), "Mines: %d", board->_mine_count);
+	snprintf(flag_text, sizeof(flag_text), "Flags: %d", board->_flag_count);
+
+	int flag_text_length = strlen(flag_text);
+
+	wclear(status_win);
+	box(status_win, 0, 0);
+	mvwprintw(status_win, 1, 1, "%s", mine_text);
+	mvwprintw(status_win, 1, window_width - (flag_text_length - 1), "%s", flag_text);
+	wrefresh(status_win);
+}
+
 void start_with_board(struct board *board) {
 	int screen_width, screen_height;
 	getmaxyx(stdscr, screen_height, screen_width);
@@ -108,17 +126,24 @@ void start_with_board(struct board *board) {
 	// tiles padding so we can draw a box around it
 	int window_width = board->_width + 2;
 	int window_height = board->_height + 2;
-	board_win = newwin(window_height, window_width, screen_height / 2 - window_height / 2, screen_width / 2 - window_width / 2);
+	int window_x = screen_width / 2 - window_width / 2;
+	int window_y = screen_height / 2 - window_height / 2;
+	board_win = newwin(window_height, window_width, window_y, window_x);
 	box(board_win, 0, 0);
+
+	status_win = newwin(3, window_width, window_y + window_height, window_x);
 
 	// Draw an initial representation so you see the window when the game starts
 	render_board(board, board_win);
 	refresh();
 	wrefresh(board_win);
+	update_status_window(board);
+	wrefresh(status_win);
 	
 	game_loop(board_win, board);
 }
 
+// Callback from libminesweeper
 void tile_changed(struct board *board, uint8_t *tile, int x, int y) {
 	update_tile(board, board_win, x, y);
 }
@@ -154,6 +179,7 @@ void game_loop(WINDOW *window, struct board *board) {
 		case 'g':
 		case 'f':
 			toggle_flag_at_cursor(board);
+			update_status_window(board);
 			break;
 
 		case ',':
