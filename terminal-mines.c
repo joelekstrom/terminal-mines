@@ -184,6 +184,7 @@ void game_loop(WINDOW *window, struct board *board) {
 
 		case ',':
 			open_tile_at_cursor(board);
+			update_status_window(board);
 			break;
 		}
 
