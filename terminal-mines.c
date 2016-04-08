@@ -39,6 +39,21 @@ int main(int argc, char **argv) {
 	struct tm_options options = parse_options(argc, argv);
 	setup_ncurses();
 
+	// Make sure the desired size is not larger than the terminal window
+	int screen_width, screen_height;
+	getmaxyx(stdscr, screen_height, screen_width);
+
+	int max_width = screen_width - 2; // Remove 2 so we can fit window border
+	int max_height = screen_height - 5; // Window border + status window height
+
+	if (options.width > max_width) {
+		options.width = max_width;
+	}
+
+	if (options.height > max_height) {
+		options.height = max_height;
+	}
+
 	// Set up a game board
 	srand(time(NULL));
 	uint8_t *buffer = malloc(minimum_buffer_size(options.width, options.height));
