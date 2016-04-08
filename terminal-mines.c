@@ -212,7 +212,7 @@ char char_for_tile(struct board *board, uint8_t *tile) {
 		if (adj_count > 0) {
 			return '0' + adj_count;
 		}
-		return '.';
+		return ' ';
 	} else if (*tile & TILE_FLAG) {
 		return 'F';
 	}
