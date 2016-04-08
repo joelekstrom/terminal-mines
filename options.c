@@ -4,12 +4,15 @@
 #include <stdlib.h>
 #include "options.h"
 
+void show_help();
+
 struct tm_options parse_options(int argc, char **argv)
 {
 	static struct option options[] = {
 		{ "width", required_argument, NULL, 'w' },
 		{ "height", required_argument, NULL, 'h' },
 		{ "mine-density",  required_argument, NULL, 'm'},
+		{ "help", no_argument, NULL, 1 },
 		{ NULL, 0, NULL, 0 }
 	};
 
@@ -41,8 +44,25 @@ struct tm_options parse_options(int argc, char **argv)
 			}
 			break;
 		}
+
+		case 1: {
+			show_help();
+			exit(0);
+		}
 		}
 	}
 	
 	return tm_options;
+}
+
+void show_help()
+{
+    pid_t pid = fork();
+    if (pid == 0) { /* Child process */
+        static char *argv[] = {"man", "terminal-mines", NULL};
+        execv("/usr/bin/man", argv);
+        exit(127); /* only if execv fails */
+    } else { /* pid != 0; parent process */
+        waitpid(pid, 0, 0); /* wait for child to exit */
+    }
 }
