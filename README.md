@@ -10,14 +10,16 @@ After cloning the project, `cd` to the folder and run:
 git submodule init
 git submodule update
 make
+make install
 ```
 
-Now you should have a binary called `terminal-mines` in the folder. You can place it wherever you want!
+Terminal Mines is now installed on your system.
 
 ## Starting the game
-Run the game with `./terminal-mines` or add an alias for it.
+Run the game by typing `terminal-mines`. Run `terminal-mines --help` or `man terminal-mines`
+to view additional info.
 
-To select size/difficulty, play with the following arguments:
+To select size/difficulty, play with the following options:
 
 - `--width` Width of the game board
 - `--height` Height of the game board
@@ -36,3 +38,11 @@ Example:
 - Open tile: `,`
 
 The controls were inspired by nethack/vim.
+
+## Uninstall
+To completely remove terminal mines, run the following:
+
+```
+rm /usr/local/bin/terminal-mines
+rm /usr/local/share/man/man1/terminal-mines.1
+```
