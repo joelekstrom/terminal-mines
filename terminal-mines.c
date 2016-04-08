@@ -2,9 +2,10 @@
 #include <ncurses.h>
 #include <time.h>
 #include <stdlib.h>
-#include <getopt.h>
 #include <inttypes.h>
 #include <string.h>
+
+#include "options.h"
 
 enum {
 	COLOR_PAIR_DEFAULT = 1,
@@ -23,7 +24,6 @@ enum {
 
 void setup_ncurses();
 void init_colors();
-void parse_options(int argc, char **argv);
 void start_with_board(struct board *board);
 char char_at_tile(struct board *board, int x, int y);
 void start_with_board(struct board *board);
@@ -32,64 +32,22 @@ void render_board(struct board *board, WINDOW *window);
 void tile_changed(struct board *board, uint8_t *tile, int x, int y);
 void update_tile(struct board *board, WINDOW *window, int x, int y);
 
-int width = 20;
-int height = 10;
-float mine_density = 0.1;
 WINDOW *board_win;
 WINDOW *status_win;
 
 int main(int argc, char **argv) {
-	parse_options(argc, argv);
+	struct tm_options options = parse_options(argc, argv);
 	setup_ncurses();
 
 	// Set up a game board
 	srand(time(NULL));
-	uint8_t *buffer = malloc(minimum_buffer_size(width, height));
-	struct board *b = board_init(width, height, mine_density, buffer);
+	uint8_t *buffer = malloc(minimum_buffer_size(options.width, options.height));
+	struct board *b = board_init(options.width, options.height, options.mine_density, buffer);
 	b->on_tile_updated = &tile_changed;
 
 	// Start the ncurses frontend
 	start_with_board(b);
 	free(buffer);
-}
-
-void parse_options(int argc, char **argv)
-{
-	static struct option options[] = {
-		{ "width", required_argument, NULL, 'w' },
-		{ "height", required_argument, NULL, 'h' },
-		{ "mine-density",  required_argument, NULL, 'm'},
-		{ NULL, 0, NULL, 0 }
-	};
-
-	char param;
-	while ((param = getopt_long(argc, argv, "w:h:m:", options, NULL)) != -1) {
-		switch (param) {
-		case 'w': {
-			uintmax_t value = strtoumax(optarg, NULL, 10);
-			if (value != UINTMAX_MAX) {
-				width = (int)value;
-			}
-			break;
-		}
-
-		case 'h': {
-			uintmax_t value = strtoumax(optarg, NULL, 10);
-			if (value != UINTMAX_MAX) {
-				height = (int)value;
-			}
-			break;
-		}
-
-		case 'm': {
-			float value = strtof(optarg, NULL);
-			if (value != 0) {
-				mine_density = value;
-			}
-			break;
-		}
-		}
-	}
 }
 
 void setup_ncurses() {
