@@ -2,24 +2,27 @@
 #include <inttypes.h>
 #include <string.h>
 #include <stdlib.h>
+#include <stdio.h>
 #include "options.h"
 
 void show_help();
+void print_version();
 
 struct tm_options parse_options(int argc, char **argv)
 {
 	static struct option options[] = {
 		{ "width", required_argument, NULL, 'w' },
 		{ "height", required_argument, NULL, 'h' },
-		{ "mine-density",  required_argument, NULL, 'm'},
+		{ "mine-density",  required_argument, NULL, 'm' },
 		{ "help", no_argument, NULL, 1 },
+		{ "version", no_argument, NULL, 'v' },
 		{ NULL, 0, NULL, 0 }
 	};
 
 	struct tm_options tm_options = {20, 10, 0.1};
 
 	char param;
-	while ((param = getopt_long(argc, argv, "w:h:m:", options, NULL)) != -1) {
+	while ((param = getopt_long(argc, argv, "w:h:m:v", options, NULL)) != -1) {
 		switch (param) {
 		case 'w': {
 			uintmax_t value = strtoumax(optarg, NULL, 10);
@@ -45,6 +48,11 @@ struct tm_options parse_options(int argc, char **argv)
 			break;
 		}
 
+		case 'v': {
+			print_version();
+			exit(0);
+		}
+
 		case 1: {
 			show_help();
 			exit(0);
@@ -65,4 +73,10 @@ void show_help()
     } else { /* pid != 0; parent process */
         waitpid(pid, 0, 0); /* wait for child to exit */
     }
+}
+
+void print_version()
+{
+	puts("1.0.0");
+	exit(0);
 }
