@@ -16,5 +16,7 @@ clean:
 	$(MAKE) -C libminesweeper clean
 
 install:
-	install ./$(EXECUTABLE) $(INSTALL_PATH)/bin/
-	install ./man/$(EXECUTABLE).1 $(INSTALL_PATH)/share/man/man1/
+	install -d $(INSTALL_PATH)/bin/
+	install $(EXECUTABLE) $(INSTALL_PATH)/bin/
+	install -d $(INSTALL_PATH)/share/man/man1/
+	install man/$(EXECUTABLE).1 $(INSTALL_PATH)/share/man/man1/
