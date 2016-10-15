@@ -16,13 +16,14 @@ struct tm_options parse_options(int argc, char **argv)
 		{ "mine-density",  required_argument, NULL, 'm' },
 		{ "help", no_argument, NULL, 1 },
 		{ "version", no_argument, NULL, 'v' },
+		{ "adventure-mode", no_argument, NULL, 'a' },
 		{ NULL, 0, NULL, 0 }
 	};
 
 	struct tm_options tm_options = {20, 10, 0.1};
 
 	char param;
-	while ((param = getopt_long(argc, argv, "w:h:m:v", options, NULL)) != -1) {
+	while ((param = getopt_long(argc, argv, "w:h:m:va", options, NULL)) != -1) {
 		switch (param) {
 		case 'w': {
 			uintmax_t value = strtoumax(optarg, NULL, 10);
@@ -53,6 +54,11 @@ struct tm_options parse_options(int argc, char **argv)
 			exit(0);
 		}
 
+		case 'a': {
+			tm_options.adventure_mode = true;
+			break;
+		}
+
 		case 1: {
 			show_help();
 			exit(0);
@@ -77,6 +83,5 @@ void show_help()
 
 void print_version()
 {
-	puts("1.0.0");
-	exit(0);
+	puts("1.1.0");
 }

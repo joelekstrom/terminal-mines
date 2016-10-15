@@ -24,10 +24,9 @@ enum {
 
 void setup_ncurses();
 void init_colors();
-void start_with_board(struct board *board);
 char char_at_tile(struct board *board, int x, int y);
-void start_with_board(struct board *board);
-void game_loop(WINDOW *window, struct board *board);
+void start_with_board(struct board *board, struct tm_options options);
+void game_loop(WINDOW *window, struct board *board, struct tm_options options);
 void render_board(struct board *board, WINDOW *window);
 void tile_changed(struct board *board, uint8_t *tile, int x, int y);
 void update_tile(struct board *board, WINDOW *window, int x, int y);
@@ -61,7 +60,7 @@ int main(int argc, char **argv) {
 	b->on_tile_updated = &tile_changed;
 
 	// Start the ncurses frontend
-	start_with_board(b);
+	start_with_board(b, options);
 	free(buffer);
 }
 
@@ -91,7 +90,7 @@ void update_status_window(struct board *board) {
 	wrefresh(status_win);
 }
 
-void start_with_board(struct board *board) {
+void start_with_board(struct board *board, struct tm_options options) {
 	int screen_width, screen_height;
 	getmaxyx(stdscr, screen_height, screen_width);
 
@@ -106,6 +105,14 @@ void start_with_board(struct board *board) {
 
 	status_win = newwin(3, window_width, window_y + window_height, window_x);
 
+	// When we run in adventure mode, we want to place the player in the
+	// bottom left corner, and make sure there are no mines too close
+	if (options.adventure_mode) {
+		board->cursor_x = 0;
+		board->cursor_y = board->_height - 1;
+		open_tile_at_cursor(board);
+	}
+
 	// Draw an initial representation so you see the window when the game starts
 	render_board(board, board_win);
 	refresh();
@@ -113,7 +120,7 @@ void start_with_board(struct board *board) {
 	update_status_window(board);
 	wrefresh(status_win);
 	
-	game_loop(board_win, board);
+	game_loop(board_win, board, options);
 }
 
 // Callback from libminesweeper
@@ -121,7 +128,14 @@ void tile_changed(struct board *board, uint8_t *tile, int x, int y) {
 	update_tile(board, board_win, x, y);
 }
 
-void game_loop(WINDOW *window, struct board *board) {
+void tm_move_cursor(struct board *board, enum direction direction, struct tm_options options) {
+	move_cursor(board, direction, !options.adventure_mode);
+	if (options.adventure_mode) {
+		open_tile_at_cursor(board);
+	}
+}
+
+void game_loop(WINDOW *window, struct board *board, struct tm_options options) {
 	// Wait for keyboard input
 	keypad(stdscr, TRUE);
 	int ch;
@@ -131,22 +145,22 @@ void game_loop(WINDOW *window, struct board *board) {
 		switch(ch) {	
 		case KEY_LEFT:
 		case 'h':
-			move_cursor(board, LEFT, true);
+			tm_move_cursor(board, LEFT, options);
 			break;
 
 		case KEY_RIGHT:
 		case 'l':
-			move_cursor(board, RIGHT, true);
+			tm_move_cursor(board, RIGHT, options);
 			break;
 
 		case KEY_UP:
 		case 'k':
-			move_cursor(board, UP, true);
+			tm_move_cursor(board, UP, options);
 			break;
 
 		case KEY_DOWN:
 		case 'j':
-			move_cursor(board, DOWN, true);
+			tm_move_cursor(board, DOWN, options);
 			break;
 
 		case 'g':
