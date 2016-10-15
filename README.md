@@ -39,6 +39,15 @@ Example:
 
 The controls were inspired by nethack/vim.
 
+## Adventure Mode
+
+Adventure Mode is a new mode added in version 1.1.0. To start a game in adventure mode,
+use the `--adventure-mode` or `-a` option. When playing in adventure mode, you control
+the player character, `@`, and you must reach the exit tile, `>`.
+
+Every tile you cross will be opened, and you can not place any flags. The standard
+difficulty options work in adventure mode as well.
+
 ## Uninstall
 To completely remove terminal mines, run the following:
 
