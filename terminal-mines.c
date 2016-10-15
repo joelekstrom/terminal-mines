@@ -6,40 +6,31 @@
 #include <string.h>
 
 #include "options.h"
+#include "graphics.h"
 
-enum {
-	COLOR_PAIR_DEFAULT = 1,
-	COLOR_PAIR_CURSOR,
-	COLOR_PAIR_MINE,
-	COLOR_PAIR_FLAG,
-	COLOR_PAIR_1,
-	COLOR_PAIR_2,
-	COLOR_PAIR_3,
-	COLOR_PAIR_4,
-	COLOR_PAIR_5,
-	COLOR_PAIR_6,
-	COLOR_PAIR_7,
-	COLOR_PAIR_8,
-	COLOR_PAIR_ADVENTURE_EXIT,
-	COLOR_PAIR_ADVENTURE_PLAYER
-};
-
-void setup_ncurses();
-void init_colors();
 char char_at_tile(struct board *board, int x, int y);
 void start_with_board(struct board *board, struct tm_options options);
 void game_loop(WINDOW *window, struct board *board, struct tm_options options);
-void render_board(struct board *board, WINDOW *window, struct tm_options options);
 void tile_changed(struct board *board, uint8_t *tile, int x, int y);
-void update_tile(struct board *board, WINDOW *window, int x, int y, struct tm_options options);
+void render_board(struct board *board, WINDOW *window, struct tm_options options);
+void render_tile(struct board *board, WINDOW *window, int x, int y, struct tm_options options);
 
 WINDOW *board_win;
 WINDOW *status_win;
-struct tm_options options;
+struct tm_options global_options;
 uint8_t *adventure_exit_tile;
 
+void setup_ncurses() {
+	initscr();
+	start_color();
+	cbreak();
+	noecho();
+	init_colors();
+	curs_set(0);
+}
+
 int main(int argc, char **argv) {
-	options = parse_options(argc, argv);
+	global_options = parse_options(argc, argv);
 	setup_ncurses();
 
 	// Make sure the desired size is not larger than the terminal window
@@ -49,32 +40,23 @@ int main(int argc, char **argv) {
 	int max_width = screen_width - 2; // Remove 2 so we can fit window border
 	int max_height = screen_height - 5; // Window border + status window height
 
-	if (options.width > max_width) {
-		options.width = max_width;
+	if (global_options.width > max_width) {
+		global_options.width = max_width;
 	}
 
-	if (options.height > max_height) {
-		options.height = max_height;
+	if (global_options.height > max_height) {
+		global_options.height = max_height;
 	}
 
 	// Set up a game board
 	srand(time(NULL));
-	uint8_t *buffer = malloc(minimum_buffer_size(options.width, options.height));
-	struct board *b = board_init(options.width, options.height, options.mine_density, buffer);
+	uint8_t *buffer = malloc(minimum_buffer_size(global_options.width, global_options.height));
+	struct board *b = board_init(global_options.width, global_options.height, global_options.mine_density, buffer);
 	b->on_tile_updated = &tile_changed;
 
 	// Start the ncurses frontend
-	start_with_board(b, options);
+	start_with_board(b, global_options);
 	free(buffer);
-}
-
-void setup_ncurses() {
-	initscr();
-	start_color();
-	cbreak();
-	noecho();
-	init_colors();
-	curs_set(0);
 }
 
 void update_status_window(struct board *board) {
@@ -130,7 +112,7 @@ void start_with_board(struct board *board, struct tm_options options) {
 
 // Callback from libminesweeper
 void tile_changed(struct board *board, uint8_t *tile, int x, int y) {
-	update_tile(board, board_win, x, y, options);
+	render_tile(board, board_win, x, y, global_options);
 }
 
 void tm_move_cursor(struct board *board, enum direction direction, struct tm_options options) {
@@ -186,8 +168,8 @@ void game_loop(WINDOW *window, struct board *board, struct tm_options options) {
 		}
 
 		if (board->cursor_x != previous_x || board->cursor_y != previous_y) {
-			update_tile(board, window, previous_x, previous_y, options);
-			update_tile(board, window, board->cursor_x, board->cursor_y, options);
+			render_tile(board, window, previous_x, previous_y, options);
+			render_tile(board, window, board->cursor_x, board->cursor_y, options);
 		}
 
 		wrefresh(window);
@@ -215,33 +197,18 @@ void game_loop(WINDOW *window, struct board *board, struct tm_options options) {
  	endwin();
 }
 
-void init_colors() {
-	use_default_colors();
-	init_pair(COLOR_PAIR_DEFAULT, -1, -1);
-	init_pair(COLOR_PAIR_CURSOR, -1, COLOR_GREEN);
-	init_pair(COLOR_PAIR_MINE, -1, COLOR_RED);
-	init_pair(COLOR_PAIR_FLAG, COLOR_WHITE, COLOR_YELLOW);
-	init_pair(COLOR_PAIR_1, COLOR_BLUE, -1);
-	init_pair(COLOR_PAIR_2, COLOR_GREEN, -1);
-	init_pair(COLOR_PAIR_3, COLOR_RED, -1);
-	init_pair(COLOR_PAIR_4, COLOR_YELLOW, -1);
-	// TODO: Set colors for 5,6,7,8
-	init_pair(COLOR_PAIR_ADVENTURE_EXIT, COLOR_BLACK, COLOR_GREEN);
-	init_pair(COLOR_PAIR_ADVENTURE_PLAYER, COLOR_GREEN, -1);
-}
-
 char char_for_tile(struct board *board, uint8_t *tile, struct tm_options options) {
 	// Opened with mine, and game over state where all mines are displayed
 	if (((*tile & TILE_MINE) && board->_state == BOARD_GAME_OVER) || (*tile & TILE_MINE && *tile & TILE_OPENED)) {
-		return '*';
+		return CHAR_MINE;
 	}
 
 	// In adventure mode, we display the cursor as a player '@' and an exit tile '>'
 	if (options.adventure_mode) {
 		if (tile == adventure_exit_tile) {
-			return '>';
+			return CHAR_ADVENTURE_EXIT;
 		} else if (tile == get_tile_at(board, board->cursor_x, board->cursor_y)) {
-			return '@';
+			return CHAR_ADVENTURE_PLAYER;
 		}
 	}
 
@@ -251,23 +218,23 @@ char char_for_tile(struct board *board, uint8_t *tile, struct tm_options options
 		if (adj_count > 0) {
 			return '0' + adj_count;
 		}
-		return ' ';
+		return CHAR_EMPTY;
 	}
 
 	// Flags are shown as an 'F'
 	if (*tile & TILE_FLAG) {
-		return 'F';
+		return CHAR_FLAG;
 	}
 
 	// Unopened tiles
-	return '#';
+	return CHAR_TILE;
 }
 
-void update_tile(struct board *board, WINDOW *window, int x, int y, struct tm_options options) {
+void render_tile(struct board *board, WINDOW *window, int x, int y, struct tm_options options) {
 	uint8_t *tile = get_tile_at(board, x, y);
-	char sprite = char_for_tile(board, tile, options);
+	char c = char_for_tile(board, tile, options);
 	bool is_cursor = (x == board->cursor_x && y == board->cursor_y) ? true : false;
-	if (sprite == '*') {
+	if (c == CHAR_MINE) {
 		wattron(window, COLOR_PAIR(COLOR_PAIR_MINE));
 	} else if (tile == adventure_exit_tile) {
 		wattron(window, COLOR_PAIR(COLOR_PAIR_ADVENTURE_EXIT));
@@ -275,23 +242,23 @@ void update_tile(struct board *board, WINDOW *window, int x, int y, struct tm_op
 		wattron(window, COLOR_PAIR(COLOR_PAIR_ADVENTURE_PLAYER));
 	} else if (is_cursor) {
 		wattron(window, COLOR_PAIR(COLOR_PAIR_CURSOR));
-	} else if (sprite == 'F') {
+	} else if (c == CHAR_FLAG) {
 		wattron(window, COLOR_PAIR(COLOR_PAIR_FLAG));
-	} else if (sprite >= '1' && sprite <= '8') {
-		wattron(window, COLOR_PAIR(COLOR_PAIR_1 + (sprite - '1')));
+	} else if (c >= '1' && c <= '8') {
+		wattron(window, COLOR_PAIR(COLOR_PAIR_1 + (c - '1')));
 	} else {
 		wattron(window, COLOR_PAIR(COLOR_PAIR_DEFAULT));
 	}
 
 	// Add 1 to the position in both axes so we stay within the
 	// window border.
-	mvwaddch(window, y + 1, x + 1, sprite);
+	mvwaddch(window, y + 1, x + 1, c);
 }
 
 void render_board(struct board *board, WINDOW *window, struct tm_options options) {
 	for (int x = 0; x < board->_width; x++) {
 		for (int y = 0; y < board->_height; y++) {
-			update_tile(board, window, x, y, options);
+			render_tile(board, window, x, y, options);
 		}
 	}
 }
