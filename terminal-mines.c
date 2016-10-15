@@ -8,17 +8,13 @@
 #include "options.h"
 #include "graphics.h"
 
-char char_at_tile(struct board *board, int x, int y);
 void start_with_board(struct board *board, struct tm_options options);
 void game_loop(WINDOW *window, struct board *board, struct tm_options options);
 void tile_changed(struct board *board, uint8_t *tile, int x, int y);
-void render_board(struct board *board, WINDOW *window, struct tm_options options);
-void render_tile(struct board *board, WINDOW *window, int x, int y, struct tm_options options);
 
 WINDOW *board_win;
 WINDOW *status_win;
 struct tm_options global_options;
-uint8_t *adventure_exit_tile;
 
 void setup_ncurses() {
 	initscr();
@@ -59,23 +55,6 @@ int main(int argc, char **argv) {
 	free(buffer);
 }
 
-void update_status_window(struct board *board) {
-	int window_width = board->_width;
-
-	char mine_text[128];
-	char flag_text[128];
-	snprintf(mine_text, sizeof(mine_text), "Mines: %d", board->_mine_count);
-	snprintf(flag_text, sizeof(flag_text), "Flags: %d", board->_flag_count);
-
-	int flag_text_length = strlen(flag_text);
-
-	wclear(status_win);
-	box(status_win, 0, 0);
-	mvwprintw(status_win, 1, 1, "%s", mine_text);
-	mvwprintw(status_win, 1, window_width - (flag_text_length - 1), "%s", flag_text);
-	wrefresh(status_win);
-}
-
 void start_with_board(struct board *board, struct tm_options options) {
 	int screen_width, screen_height;
 	getmaxyx(stdscr, screen_height, screen_width);
@@ -96,7 +75,7 @@ void start_with_board(struct board *board, struct tm_options options) {
 	if (options.adventure_mode) {
 		board->cursor_x = 0;
 		board->cursor_y = board->_height - 1;
-		adventure_exit_tile = get_tile_at(board, board->_width - 1, 0);
+		options.adventure_exit_tile = get_tile_at(board, board->_width - 1, 0);
 		open_tile_at_cursor(board);
 	}
 
@@ -104,22 +83,17 @@ void start_with_board(struct board *board, struct tm_options options) {
 	render_board(board, board_win, options);
 	refresh();
 	wrefresh(board_win);
-	update_status_window(board);
+	update_status_window(status_win, board);
 	wrefresh(status_win);
 	
 	game_loop(board_win, board, options);
-}
-
-// Callback from libminesweeper
-void tile_changed(struct board *board, uint8_t *tile, int x, int y) {
-	render_tile(board, board_win, x, y, global_options);
 }
 
 void tm_move_cursor(struct board *board, enum direction direction, struct tm_options options) {
 	move_cursor(board, direction, !options.adventure_mode);
 	if (options.adventure_mode) {
 		uint8_t *tile = get_tile_at(board, board->cursor_x, board->cursor_y);
-		if (tile == adventure_exit_tile) {
+		if (tile == options.adventure_exit_tile) {
 			board->_state = BOARD_WIN;
 		} else {
 			open_tile_at_cursor(board);
@@ -158,12 +132,12 @@ void game_loop(WINDOW *window, struct board *board, struct tm_options options) {
 		case 'g':
 		case 'f':
 			toggle_flag_at_cursor(board);
-			update_status_window(board);
+			update_status_window(status_win, board);
 			break;
 
 		case ',':
 			open_tile_at_cursor(board);
-			update_status_window(board);
+			update_status_window(status_win, board);
 			break;
 		}
 
@@ -178,6 +152,7 @@ void game_loop(WINDOW *window, struct board *board, struct tm_options options) {
 	render_board(board, window, options);
 	wrefresh(window);
 
+	// Create a win/lose window, and then exit the game after a key press
 	char *end_text = NULL;
 	if (board->_state == BOARD_GAME_OVER) {
 		end_text = "You failed!";
@@ -197,68 +172,8 @@ void game_loop(WINDOW *window, struct board *board, struct tm_options options) {
  	endwin();
 }
 
-char char_for_tile(struct board *board, uint8_t *tile, struct tm_options options) {
-	// Opened with mine, and game over state where all mines are displayed
-	if (((*tile & TILE_MINE) && board->_state == BOARD_GAME_OVER) || (*tile & TILE_MINE && *tile & TILE_OPENED)) {
-		return CHAR_MINE;
-	}
-
-	// In adventure mode, we display the cursor as a player '@' and an exit tile '>'
-	if (options.adventure_mode) {
-		if (tile == adventure_exit_tile) {
-			return CHAR_ADVENTURE_EXIT;
-		} else if (tile == get_tile_at(board, board->cursor_x, board->cursor_y)) {
-			return CHAR_ADVENTURE_PLAYER;
-		}
-	}
-
-	// On opened tile, we show the adjacent mine count
-	if (*tile & TILE_OPENED) {
-		uint8_t adj_count = adjacent_mine_count(tile);
-		if (adj_count > 0) {
-			return '0' + adj_count;
-		}
-		return CHAR_EMPTY;
-	}
-
-	// Flags are shown as an 'F'
-	if (*tile & TILE_FLAG) {
-		return CHAR_FLAG;
-	}
-
-	// Unopened tiles
-	return CHAR_TILE;
+// Callback from libminesweeper
+void tile_changed(struct board *board, uint8_t *tile, int x, int y) {
+	render_tile(board, board_win, x, y, global_options);
 }
 
-void render_tile(struct board *board, WINDOW *window, int x, int y, struct tm_options options) {
-	uint8_t *tile = get_tile_at(board, x, y);
-	char c = char_for_tile(board, tile, options);
-	bool is_cursor = (x == board->cursor_x && y == board->cursor_y) ? true : false;
-	if (c == CHAR_MINE) {
-		wattron(window, COLOR_PAIR(COLOR_PAIR_MINE));
-	} else if (tile == adventure_exit_tile) {
-		wattron(window, COLOR_PAIR(COLOR_PAIR_ADVENTURE_EXIT));
-	} else if (is_cursor && options.adventure_mode) {
-		wattron(window, COLOR_PAIR(COLOR_PAIR_ADVENTURE_PLAYER));
-	} else if (is_cursor) {
-		wattron(window, COLOR_PAIR(COLOR_PAIR_CURSOR));
-	} else if (c == CHAR_FLAG) {
-		wattron(window, COLOR_PAIR(COLOR_PAIR_FLAG));
-	} else if (c >= '1' && c <= '8') {
-		wattron(window, COLOR_PAIR(COLOR_PAIR_1 + (c - '1')));
-	} else {
-		wattron(window, COLOR_PAIR(COLOR_PAIR_DEFAULT));
-	}
-
-	// Add 1 to the position in both axes so we stay within the
-	// window border.
-	mvwaddch(window, y + 1, x + 1, c);
-}
-
-void render_board(struct board *board, WINDOW *window, struct tm_options options) {
-	for (int x = 0; x < board->_width; x++) {
-		for (int y = 0; y < board->_height; y++) {
-			render_tile(board, window, x, y, options);
-		}
-	}
-}

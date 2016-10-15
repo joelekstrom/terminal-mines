@@ -1,6 +1,9 @@
 #ifndef GRAPHICS_H
 #define GRAPHICS_H
+
 #include <ncurses.h>
+#include <minesweeper.h>
+#include "options.h"
 
 enum {
 	COLOR_PAIR_DEFAULT = 1,
@@ -28,19 +31,9 @@ enum {
 	CHAR_EMPTY = ' '
 };
 
-void init_colors() {
-	use_default_colors();
-	init_pair(COLOR_PAIR_DEFAULT, -1, -1);
-	init_pair(COLOR_PAIR_CURSOR, -1, COLOR_GREEN);
-	init_pair(COLOR_PAIR_MINE, -1, COLOR_RED);
-	init_pair(COLOR_PAIR_FLAG, COLOR_WHITE, COLOR_YELLOW);
-	init_pair(COLOR_PAIR_1, COLOR_BLUE, -1);
-	init_pair(COLOR_PAIR_2, COLOR_GREEN, -1);
-	init_pair(COLOR_PAIR_3, COLOR_RED, -1);
-	init_pair(COLOR_PAIR_4, COLOR_YELLOW, -1);
-	// TODO: Set colors for 5,6,7,8
-	init_pair(COLOR_PAIR_ADVENTURE_EXIT, COLOR_BLACK, COLOR_GREEN);
-	init_pair(COLOR_PAIR_ADVENTURE_PLAYER, COLOR_GREEN, -1);
-}
+void init_colors();
+void render_board(struct board *board, WINDOW *window, struct tm_options options);
+void render_tile(struct board *board, WINDOW *window, int x, int y, struct tm_options options);
+void update_status_window(WINDOW *status_window, struct board *board);
 
 #endif

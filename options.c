@@ -23,7 +23,12 @@ struct tm_options parse_options(int argc, char **argv)
 		{ NULL, 0, NULL, 0 }
 	};
 
-	struct tm_options tm_options = {20, 10, 0.1};
+	// Default options
+	struct tm_options tm_options = {.width = 20,
+									.height = 10,
+									.mine_density = 0.1,
+									.adventure_mode = false,
+									.adventure_exit_tile = NULL};
 
 	char param;
 	while ((param = getopt_long(argc, argv, "w:h:m:va", options, NULL)) != -1) {
