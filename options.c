@@ -79,9 +79,17 @@ struct tm_options parse_options(int argc, char **argv)
 
 void show_help()
 {
+	// If manpage exists locally, prioritize it to allow local builds to show help
+	char *manpage_path = NULL;
+	if (access("man/terminal-mines.1", F_OK | R_OK) != -1 ) {
+		manpage_path = "man/terminal-mines.1";
+	} else {
+		manpage_path = "terminal-mines";
+	}
+
     pid_t pid = fork();
     if (pid == 0) { /* Child process */
-        static char *argv[] = {"man", "terminal-mines", NULL};
+        char *argv[] = {"man", manpage_path, NULL};
         execv("/usr/bin/man", argv);
         exit(127); /* only if execv fails */
     } else { /* pid != 0; parent process */
