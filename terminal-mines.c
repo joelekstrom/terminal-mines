@@ -75,6 +75,16 @@ void start_with_game(struct minesweeper_game *game, struct tm_options options) {
 	if (options.adventure_mode) {
 		minesweeper_set_cursor(game, 0, game->height - 1);
 		options.adventure_exit_tile = minesweeper_get_tile_at(game, game->width - 1, 0);
+
+		// Clear the 8 tiles closest to the player
+		uint8_t *clear_tile = minesweeper_get_tile_at(game, 1, game->height - 2);
+		if (clear_tile && (*clear_tile & TILE_MINE)) minesweeper_toggle_mine(game, clear_tile);
+		uint8_t *adjacent_tiles[8]; minesweeper_get_adjacent_tiles(game, clear_tile, adjacent_tiles);
+		for (int i = 0; i < 8; i++) {
+			uint8_t *tile = adjacent_tiles[i];
+			if (tile && (*tile & TILE_MINE)) minesweeper_toggle_mine(game, tile);
+		}
+		
 		minesweeper_open_tile(game, game->selected_tile);
 	} else {
 		minesweeper_set_cursor(game, game->width / 2, game->height / 2);
