@@ -84,6 +84,11 @@ void start_with_game(struct minesweeper_game *game, struct tm_options options) {
 			uint8_t *tile = adjacent_tiles[i];
 			if (tile && (*tile & TILE_MINE)) minesweeper_toggle_mine(game, tile);
 		}
+
+		// Clear the exit tile
+		if (*options.adventure_exit_tile & TILE_MINE) {
+			minesweeper_toggle_mine(game, options.adventure_exit_tile);
+		}
 		
 		minesweeper_open_tile(game, game->selected_tile);
 	} else {
