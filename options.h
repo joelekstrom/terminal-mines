@@ -9,7 +9,6 @@ struct tm_options {
 	int height;
 	float mine_density;
 	bool adventure_mode;
-	uint8_t *adventure_exit_tile;
 };
 
 struct tm_options parse_options(int argc, char **argv);

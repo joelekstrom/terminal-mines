@@ -1,11 +1,13 @@
-C_FLAGS = -std=c99 -Wall
+CFLAGS = -std=c99 -Wall
+LDLIBS = -lncurses -lminesweeper
+LDFLAGS = -Llibminesweeper
+CPPFLAGS = -Ilibminesweeper/include
 
 INSTALL_PATH?=/usr/local
 EXECUTABLE = terminal-mines
 LIBMINESWEEPER = libminesweeper/libminesweeper.a
 
-$(EXECUTABLE): $(LIBMINESWEEPER) terminal-mines.c options.c
-	$(CC) $(C_FLAGS) *.c -Ilibminesweeper/include -Llibminesweeper -o $@ -lncurses -lminesweeper
+$(EXECUTABLE): $(LIBMINESWEEPER) terminal-mines.o options.o graphics.o
 
 $(LIBMINESWEEPER):
 	$(MAKE) -C libminesweeper

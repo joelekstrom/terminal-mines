@@ -10,11 +10,12 @@
 
 void start_with_game(struct minesweeper_game *game, struct tm_options options);
 void game_loop(WINDOW *window, struct minesweeper_game *game, struct tm_options options);
-void tile_changed(struct minesweeper_game *game, uint8_t *tile);
+void tile_changed(struct minesweeper_game *game, struct minesweeper_tile *tile, void *context);
 
 WINDOW *game_win;
 WINDOW *status_win;
 struct tm_options global_options;
+struct minesweeper_tile *adventure_exit_tile;
 
 void setup_ncurses() {
 	initscr();
@@ -74,29 +75,29 @@ void start_with_game(struct minesweeper_game *game, struct tm_options options) {
 	// bottom left corner, and make sure there are no mines too close
 	if (options.adventure_mode) {
 		minesweeper_set_cursor(game, 0, game->height - 1);
-		options.adventure_exit_tile = minesweeper_get_tile_at(game, game->width - 1, 0);
+		adventure_exit_tile = minesweeper_get_tile_at(game, game->width - 1, 0);
 
 		// Clear the 8 tiles closest to the player
-		uint8_t *clear_tile = minesweeper_get_tile_at(game, 1, game->height - 2);
-		if (clear_tile && (*clear_tile & TILE_MINE)) minesweeper_toggle_mine(game, clear_tile);
-		uint8_t *adjacent_tiles[8]; minesweeper_get_adjacent_tiles(game, clear_tile, adjacent_tiles);
+		struct minesweeper_tile *clear_tile = minesweeper_get_tile_at(game, 1, game->height - 2);
+		if (clear_tile && clear_tile->has_mine) minesweeper_toggle_mine(game, clear_tile);
+		struct minesweeper_tile *adjacent_tiles[8]; minesweeper_get_adjacent_tiles(game, clear_tile, adjacent_tiles);
 		for (int i = 0; i < 8; i++) {
-			uint8_t *tile = adjacent_tiles[i];
-			if (tile && (*tile & TILE_MINE)) minesweeper_toggle_mine(game, tile);
+			struct minesweeper_tile *tile = adjacent_tiles[i];
+			if (tile && tile->has_mine) minesweeper_toggle_mine(game, tile);
 		}
 
 		// Clear the exit tile
-		if (*options.adventure_exit_tile & TILE_MINE) {
-			minesweeper_toggle_mine(game, options.adventure_exit_tile);
+		if (adventure_exit_tile->has_mine) {
+			minesweeper_toggle_mine(game, adventure_exit_tile);
 		}
-		
+
 		minesweeper_open_tile(game, game->selected_tile);
 	} else {
 		minesweeper_set_cursor(game, game->width / 2, game->height / 2);
 	}
 
 	// Draw an initial representation so you see the window when the game starts
-	render_game(game, game_win, options);
+	render_game(game, game_win);
 	refresh();
 	wrefresh(game_win);
 	update_status_window(status_win, game);
@@ -108,7 +109,7 @@ void start_with_game(struct minesweeper_game *game, struct tm_options options) {
 void tm_move_cursor(struct minesweeper_game *game, enum direction direction, struct tm_options options) {
 	minesweeper_move_cursor(game, direction, !options.adventure_mode);
 	if (options.adventure_mode) {
-		if (game->selected_tile == options.adventure_exit_tile) {
+		if (game->selected_tile == adventure_exit_tile) {
 			game->state = MINESWEEPER_WIN;
 		} else {
 			minesweeper_open_tile(game, game->selected_tile);
@@ -121,7 +122,7 @@ void game_loop(WINDOW *window, struct minesweeper_game *game, struct tm_options 
 	keypad(stdscr, TRUE);
 	int ch;
 	while((ch = getch()) != KEY_F(1) && (game->state == MINESWEEPER_PENDING_START || game->state == MINESWEEPER_PLAYING)) {
-		uint8_t *previous_tile = game->selected_tile;
+		struct minesweeper_tile *previous_tile = game->selected_tile;
 		switch(ch) {	
 		case KEY_LEFT:
 		case 'h':
@@ -156,14 +157,14 @@ void game_loop(WINDOW *window, struct minesweeper_game *game, struct tm_options 
 		}
 
 		if (game->selected_tile != previous_tile) {
-			render_tile(game, previous_tile, window, options);
-			render_tile(game, game->selected_tile, window, options);
+			render_tile(game, previous_tile, window);
+			render_tile(game, game->selected_tile, window);
 		}
 
 		wrefresh(window);
 	}
 
-	render_game(game, window, options);
+	render_game(game, window);
 	wrefresh(window);
 
 	// Create a win/lose window, and then exit the game after a key press
@@ -187,7 +188,6 @@ void game_loop(WINDOW *window, struct minesweeper_game *game, struct tm_options 
 }
 
 // Callback from libminesweeper
-void tile_changed(struct minesweeper_game *game, uint8_t *tile) {
-	render_tile(game, tile, game_win, global_options);
+void tile_changed(struct minesweeper_game *game, struct minesweeper_tile *tile, void *context) {
+	render_tile(game, tile, game_win);
 }
-

@@ -32,8 +32,8 @@ enum {
 };
 
 void init_colors();
-void render_game(struct minesweeper_game *game, WINDOW *window, struct tm_options options);
-void render_tile(struct minesweeper_game *game, uint8_t *tile, WINDOW *window, struct tm_options options);
+void render_game(struct minesweeper_game *game, WINDOW *window);
+void render_tile(struct minesweeper_game *game, struct minesweeper_tile *tile, WINDOW *window);
 void update_status_window(WINDOW *status_window, struct minesweeper_game *game);
 
 #endif
