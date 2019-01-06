@@ -3,22 +3,33 @@ LDLIBS = -lncurses -lminesweeper
 LDFLAGS = -Llibminesweeper
 CPPFLAGS = -Ilibminesweeper/include
 
-INSTALL_PATH?=/usr/local
+PREFIX?=/usr/local
 EXECUTABLE = terminal-mines
 LIBMINESWEEPER = libminesweeper/libminesweeper.a
+SOURCES = $(wildcard *.c)
+OBJECTS = $(SOURCES:.c=.o)
 
-$(EXECUTABLE): $(LIBMINESWEEPER) terminal-mines.o options.o graphics.o
+$(EXECUTABLE): $(LIBMINESWEEPER) $(OBJECTS)
 
 $(LIBMINESWEEPER):
 	$(MAKE) -C libminesweeper
 
-.PHONY: clean install
+.PHONY: clean install uninstall ascii-only
+
+ascii-only: CPPFLAGS+=-DASCII_ONLY
+ascii-only: $(EXECUTABLE)
+
 clean:
 	rm -f $(EXECUTABLE)
+	rm $(OBJECTS)
 	$(MAKE) -C libminesweeper clean
 
-install:
-	install -d $(INSTALL_PATH)/bin/
-	install $(EXECUTABLE) $(INSTALL_PATH)/bin/
-	install -d $(INSTALL_PATH)/share/man/man1/
-	install man/$(EXECUTABLE).1 $(INSTALL_PATH)/share/man/man1/
+install: $(EXECUTABLE)
+	install -d $(DESTDIR)$(PREFIX)/bin/
+	install -s $(EXECUTABLE) $(DESTDIR)$(PREFIX)/bin/
+	install -d $(DESTDIR)$(PREFIX)/share/man/man1/
+	install man/$(EXECUTABLE).1 $(DESTDIR)$(PREFIX)/share/man/man1/
+
+uninstall:
+	rm $(DESTDIR)$(PREFIX)/bin/$(EXECUTABLE)
+	rm $(DESTDIR)$(PREFIX)/share/man/man1/$(EXECUTABLE).1

@@ -6,7 +6,7 @@ void init_colors() {
 	init_pair(COLOR_PAIR_DEFAULT, -1, -1);
 	init_pair(COLOR_PAIR_CURSOR, -1, COLOR_GREEN);
 	init_pair(COLOR_PAIR_MINE, -1, COLOR_RED);
-	init_pair(COLOR_PAIR_FLAG, COLOR_WHITE, COLOR_YELLOW);
+	init_pair(COLOR_PAIR_FLAG, COLOR_YELLOW, -1);
 	init_pair(COLOR_PAIR_1, COLOR_BLUE, -1);
 	init_pair(COLOR_PAIR_2, COLOR_GREEN, -1);
 	init_pair(COLOR_PAIR_3, COLOR_RED, -1);
@@ -36,43 +36,39 @@ void update_status_window(WINDOW *status_window, struct minesweeper_game *game) 
 extern struct tm_options global_options;
 extern struct minesweeper_tile *adventure_exit_tile;
 
-char char_for_tile(struct minesweeper_game *game, struct minesweeper_tile *tile) {
+int tile_index_for_tile(struct minesweeper_game *game, struct minesweeper_tile *tile) {
 	// Opened with mine, and game over state where all mines are displayed
 	if ((tile->has_mine && game->state == MINESWEEPER_GAME_OVER) || (tile->has_mine && tile->is_opened)) {
-		return CHAR_MINE;
+		return TILE_INDEX_MINE;
 	}
 
 	// In adventure mode, we display the cursor as a player '@' and an exit tile '>'
 	if (global_options.adventure_mode) {
 		if (tile == adventure_exit_tile) {
-			return CHAR_ADVENTURE_EXIT;
+			return TILE_INDEX_ADVENTURE_EXIT;
 		} else if (tile == game->selected_tile) {
-			return CHAR_ADVENTURE_PLAYER;
+			return TILE_INDEX_ADVENTURE_PLAYER;
 		}
 	}
 
 	// On opened tile, we show the adjacent mine count
 	if (tile->is_opened) {
-		uint8_t adj_count = tile->adjacent_mine_count;
-		if (adj_count > 0) {
-			return '0' + adj_count;
-		}
-		return CHAR_EMPTY;
+		return tile->adjacent_mine_count;
 	}
 
 	// Flags are shown as an 'F'
 	if (tile->has_flag) {
-		return CHAR_FLAG;
+		return TILE_INDEX_FLAG;
 	}
 
 	// Unopened tiles
-	return CHAR_TILE;
+	return TILE_INDEX_UNOPENED;
 }
 
 void render_tile(struct minesweeper_game *game, struct minesweeper_tile *tile, WINDOW *window) {
-	char c = char_for_tile(game, tile);
-	bool is_cursor = (tile == game->selected_tile) ? true : false;
-	if (c == CHAR_MINE) {
+	int index = tile_index_for_tile(game, tile);
+	bool is_cursor = tile == game->selected_tile;
+	if (index == TILE_INDEX_MINE) {
 		wattron(window, COLOR_PAIR(COLOR_PAIR_MINE));
 	} else if (tile == adventure_exit_tile) {
 		wattron(window, COLOR_PAIR(COLOR_PAIR_ADVENTURE_EXIT));
@@ -80,10 +76,10 @@ void render_tile(struct minesweeper_game *game, struct minesweeper_tile *tile, W
 		wattron(window, COLOR_PAIR(COLOR_PAIR_ADVENTURE_PLAYER));
 	} else if (is_cursor) {
 		wattron(window, COLOR_PAIR(COLOR_PAIR_CURSOR));
-	} else if (c == CHAR_FLAG) {
+	} else if (index == TILE_INDEX_FLAG) {
 		wattron(window, COLOR_PAIR(COLOR_PAIR_FLAG));
-	} else if (c >= '1' && c <= '8') {
-		wattron(window, COLOR_PAIR(COLOR_PAIR_1 + (c - '1')));
+	} else if (index >= 1 && index <= 8) {
+		wattron(window, COLOR_PAIR(COLOR_PAIR_1 + (index - 1)));
 	} else {
 		wattron(window, COLOR_PAIR(COLOR_PAIR_DEFAULT));
 	}
@@ -91,7 +87,8 @@ void render_tile(struct minesweeper_game *game, struct minesweeper_tile *tile, W
 	// Add 1 to the position in both axes so we stay within the
 	// window border.
 	unsigned x, y; minesweeper_get_tile_location(game, tile, &x, &y);
-	mvwaddch(window, y + 1, x + 1, c);
+	static char *tile_map[] = TILE_MAP;
+	mvwaddstr(window, y + 1, x + 1, tile_map[index]);
 }
 
 void render_game(struct minesweeper_game *game, WINDOW *window) {

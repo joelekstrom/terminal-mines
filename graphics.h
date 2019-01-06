@@ -22,13 +22,19 @@ enum {
 	COLOR_PAIR_ADVENTURE_PLAYER
 };
 
-enum {
-	CHAR_MINE = '*',
-	CHAR_ADVENTURE_EXIT = '>',
-	CHAR_ADVENTURE_PLAYER = '@',
-	CHAR_FLAG = 'F',
-	CHAR_TILE = '#',
-	CHAR_EMPTY = ' '
+#ifdef ASCII_ONLY
+#define TILE_MAP {" ", "1", "2", "3", "4", "5", "6", "7", "8", "#", "*", "F", "@", ">"}
+#else
+#define TILE_MAP {" ", "1", "2", "3", "4", "5", "6", "7", "8", "■", "¤", "Þ", "@", ">"}
+#endif
+
+enum TILE_INDEX {
+    TILE_INDEX_EMPTY = 0,
+	TILE_INDEX_UNOPENED = 9,
+	TILE_INDEX_MINE,
+	TILE_INDEX_FLAG,
+	TILE_INDEX_ADVENTURE_PLAYER,
+	TILE_INDEX_ADVENTURE_EXIT,
 };
 
 void init_colors();

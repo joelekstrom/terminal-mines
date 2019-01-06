@@ -1,4 +1,5 @@
 #include <minesweeper.h>
+#include <locale.h>
 #include <ncurses.h>
 #include <time.h>
 #include <stdlib.h>
@@ -18,6 +19,7 @@ struct tm_options global_options;
 struct minesweeper_tile *adventure_exit_tile;
 
 void setup_ncurses() {
+	setlocale(LC_ALL, "");
 	initscr();
 	start_color();
 	cbreak();

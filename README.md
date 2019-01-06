@@ -3,13 +3,11 @@ An [ncurses](https://en.wikipedia.org/wiki/Ncurses)-based minesweeper game. This
 
 ![screenshot](screenshots/terminal-mines.png)
 
-## Compilation
+## Installation
 After cloning the project, `cd` to the folder and run:
 
 ```
-git submodule init
-git submodule update
-make
+git submodule init --update
 make install
 ```
 
@@ -48,10 +46,9 @@ the player character, `@`, and you must reach the exit tile, `>`.
 Every tile you cross will be opened, and you can not place any flags. The standard
 difficulty options work in adventure mode as well.
 
-## Uninstall
-To completely remove terminal mines, run the following:
+## Using plain ASCII
+If you prefer the old graphics, compile with `make ascii-only`
+before running `make install`.
 
-```
-rm /usr/local/bin/terminal-mines
-rm /usr/local/share/man/man1/terminal-mines.1
-```
+## Uninstall
+To completely remove terminal mines, run `make uninstall`.
