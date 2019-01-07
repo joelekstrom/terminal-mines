@@ -7,7 +7,7 @@ An [ncurses](https://en.wikipedia.org/wiki/Ncurses)-based minesweeper game. This
 After cloning the project, `cd` to the folder and run:
 
 ```
-git submodule init --update
+git submodule update --init
 make install
 ```
 
@@ -27,7 +27,7 @@ All the arguments can be written shorthand with the first letter in the name.
 
 Example:
 ```
-./terminal-mines -w 20 -h 20 -m 0.5
+terminal-mines -w 20 -h 20 -m 0.5
 ```
 
 ## Controls
