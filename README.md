@@ -1,9 +1,16 @@
 # terminal-mines
 An [ncurses](https://en.wikipedia.org/wiki/Ncurses)-based minesweeper game. This was made because I wanted a minesweeper game that was efficient to play without mouse. It's also a reference frontend for [libminesweeper](https://github.com/accatyyc/libminesweeper/).
 
-![screenshot](screenshots/terminal-mines.png)
+<img src="screenshots/terminal-mines.png" alt="Game screenshot" height="260" width="350"> 
 
 ## Installation
+
+### OSX Homebrew
+```
+brew install accatyyc/repo/terminal-mines
+```
+
+### Other OS's/manual compilation
 After cloning the project, `cd` to the folder and run:
 
 ```
@@ -51,4 +58,5 @@ If you prefer the old graphics, compile with `make ascii-only`
 before running `make install`.
 
 ## Uninstall
-To completely remove terminal mines, run `make uninstall`.
+To completely remove terminal mines (if you compiled it yourself), run `make uninstall` in
+the source folder.
