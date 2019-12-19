@@ -7,7 +7,7 @@ An [ncurses](https://en.wikipedia.org/wiki/Ncurses)-based minesweeper game. This
 
 ### OSX Homebrew
 ```
-brew install accatyyc/repo/terminal-mines
+brew install joelekstrom/repo/terminal-mines
 ```
 
 ### Other OS's/manual compilation
