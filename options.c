@@ -98,5 +98,5 @@ void show_help()
 
 void print_version()
 {
-	puts("1.1.0");
+	puts("1.2.0");
 }
