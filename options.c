@@ -29,7 +29,7 @@ struct tm_options parse_options(int argc, char **argv)
 									.mine_density = 0.1,
 									.adventure_mode = false};
 
-	char param;
+	signed char param;
 	while ((param = getopt_long(argc, argv, "w:h:m:va", options, NULL)) != -1) {
 		switch (param) {
 		case 'w': {
@@ -98,5 +98,5 @@ void show_help()
 
 void print_version()
 {
-	puts("1.1.0");
+	puts("1.2.0");
 }
