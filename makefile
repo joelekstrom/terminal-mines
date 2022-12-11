@@ -1,5 +1,5 @@
 CFLAGS = -std=c99 -Wall
-LDLIBS = -lncurses -lminesweeper
+LDLIBS = -lncursesw -lminesweeper
 LDFLAGS = -Llibminesweeper
 CPPFLAGS = -Ilibminesweeper/include
 
