@@ -38,11 +38,13 @@ terminal-mines -w 20 -h 20 -m 0.5
 ```
 
 ## Controls
-- Movement: `hjkl` or arrow keys
-- Place flag: `f` or `g`
-- Open tile: `,`
+- Movement: `awsd` or arrow keys
+- Place flag: `,`
+- Open tile: `.`
 
-The controls were inspired by nethack/vim.
+Controls can be modified in `controls.csv`.
+
+<!-- The controls were inspired by nethack/vim. -->
 
 ## Adventure Mode
 

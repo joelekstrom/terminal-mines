@@ -4,7 +4,7 @@ LDFLAGS = -Llibminesweeper
 CPPFLAGS = -Ilibminesweeper/include
 
 PREFIX?=/usr/local
-EXECUTABLE = terminal-mines
+EXECUTABLE = terminal-mines-dev
 LIBMINESWEEPER = libminesweeper/libminesweeper.a
 SOURCES = $(wildcard *.c)
 OBJECTS = $(SOURCES:.c=.o)

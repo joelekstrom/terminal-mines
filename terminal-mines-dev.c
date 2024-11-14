@@ -123,39 +123,42 @@ void game_loop(WINDOW *window, struct minesweeper_game *game, struct tm_options 
 	// Wait for keygame input
 	keypad(stdscr, TRUE);
 	int ch;
+
+	// Read controls from controls.csv
+	char controls[6];
+	FILE *file = fopen("controls.csv", "r");
+	if (!file) {
+		perror("Failed to open controls.csv");
+		exit(EXIT_FAILURE);
+	}
+	char line[256];
+	int count = 0;
+	while (fgets(line, sizeof(line), file)) {
+		// Process each line
+		char *token = strtok(line, ":");
+		token = strtok(NULL, ":");
+		controls[count] = *token;
+		count++;
+	}
+	fclose(file);
+
 	while((ch = getch()) != KEY_F(1) && (game->state == MINESWEEPER_PENDING_START || game->state == MINESWEEPER_PLAYING)) {
-		struct minesweeper_tile *previous_tile = game->selected_tile;
-		switch(ch) {	
-		case KEY_LEFT:
-		case 'h':
+		// loop through possible inputs
+		struct minesweeper_tile *previous_tile = game->selected_tile;		
+		if (ch == controls[0] || ch == KEY_LEFT) {
 			tm_move_cursor(game, LEFT, options);
-			break;
-
-		case KEY_RIGHT:
-		case 'l':
+		} else if (ch == controls[1] || ch == KEY_RIGHT) {
 			tm_move_cursor(game, RIGHT, options);
-			break;
-
-		case KEY_UP:
-		case 'k':
+		} else if (ch == controls[2] || ch == KEY_UP) {
 			tm_move_cursor(game, UP, options);
-			break;
-
-		case KEY_DOWN:
-		case 'j':
+		} else if (ch == controls[3] || ch == KEY_DOWN) {
 			tm_move_cursor(game, DOWN, options);
-			break;
-
-		case 'g':
-		case 'f':
+		} else if (ch == controls[4]) {
 			minesweeper_toggle_flag(game, game->selected_tile);
 			update_status_window(status_win, game);
-			break;
-
-		case ',':
+		} else if (ch == controls[5]) {
 			minesweeper_open_tile(game, game->selected_tile);
 			update_status_window(status_win, game);
-			break;
 		}
 
 		if (game->selected_tile != previous_tile) {
