@@ -151,7 +151,10 @@ void game_loop(WINDOW *window, struct minesweeper_game *game, struct tm_options 
 			minesweeper_toggle_flag(game, game->selected_tile);
 			update_status_window(status_win, game);
 			break;
-
+		case ' ':
+			minesweeper_space_tile(game, game->selected_tile);
+			update_status_window(status_win, game);
+			break;
 		case ',':
 			minesweeper_open_tile(game, game->selected_tile);
 			update_status_window(status_win, game);
